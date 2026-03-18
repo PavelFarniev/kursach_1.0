@@ -1,0 +1,228 @@
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 202 55% 98%;
+  --foreground: 206 31% 15%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 206 31% 15%;
+
+  --primary: 204 87% 42%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 197 52% 91%;
+  --secondary-foreground: 206 31% 20%;
+
+  --muted: 198 28% 94%;
+  --muted-foreground: 205 16% 43%;
+
+  --border: 203 30% 87%;
+  --input: 203 30% 87%;
+  --ring: 204 87% 42%;
+
+  --success: 155 60% 38%;
+  --warning: 37 95% 45%;
+}
+
+* {
+  @apply border-border;
+}
+
+body {
+  @apply bg-background text-foreground antialiased;
+  font-family: "Manrope", sans-serif;
+  background-image:
+    radial-gradient(circle at 0% 0%, rgba(56, 189, 248, 0.1), transparent 32%),
+    radial-gradient(circle at 100% 0%, rgba(14, 165, 233, 0.08), transparent 24%),
+    linear-gradient(180deg, rgba(248, 252, 255, 1), rgba(240, 249, 255, 0.72));
+  min-height: 100vh;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: "Space Grotesk", sans-serif;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.glass-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 18% -12%, rgba(56, 189, 248, 0.24), transparent 46%),
+    radial-gradient(circle at 86% 118%, rgba(244, 63, 94, 0.14), transparent 48%),
+    linear-gradient(160deg, rgba(255, 255, 255, 0.44), rgba(255, 255, 255, 0.14));
+  opacity: 0.62;
+  z-index: 0;
+}
+
+.glass-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.glass-card > .pulse-orb {
+  position: absolute;
+  z-index: 0;
+}
+
+@keyframes geo-slow-rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.geo-scene {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.geo-mist {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(70px);
+  opacity: 0.22;
+}
+
+.geo-mist--one {
+  top: -8%;
+  left: -6%;
+  width: 34rem;
+  height: 34rem;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.24), transparent 70%);
+}
+
+.geo-mist--two {
+  top: 8%;
+  right: -10%;
+  width: 28rem;
+  height: 28rem;
+  background: radial-gradient(circle, rgba(14, 165, 233, 0.2), transparent 68%);
+}
+
+.geo-mist--three {
+  bottom: -18%;
+  left: 38%;
+  width: 24rem;
+  height: 24rem;
+  background: radial-gradient(circle, rgba(125, 211, 252, 0.18), transparent 70%);
+}
+
+.geo-item {
+  position: absolute;
+  transform-origin: 50% 50%;
+  animation: geo-slow-rotate linear infinite;
+  will-change: transform;
+  filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.22));
+}
+
+.geo-item--reverse {
+  animation-direction: reverse;
+}
+
+.geo-item--warm {
+  filter:
+    drop-shadow(0 0 12px rgba(239, 68, 68, 0.32))
+    drop-shadow(0 0 22px rgba(244, 63, 94, 0.24));
+}
+
+.geo-svg {
+  width: 100%;
+  height: 100%;
+  shape-rendering: geometricPrecision;
+}
+
+.geo-stroke-primary {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.92;
+}
+
+.geo-stroke-secondary {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: none;
+  opacity: 0.6;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .geo-item {
+    animation: none !important;
+  }
+}
+
+@media (max-width: 1024px) {
+  .geo-item--desktop {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .geo-item {
+    opacity: 0.08 !important;
+  }
+}
+
+@keyframes pulse-orb-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(0, -10px, 0) scale(1.03);
+  }
+}
+
+@keyframes pulse-surface-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.pulse-orb {
+  animation: pulse-orb-float 8s ease-in-out infinite;
+}
+
+.pulse-surface {
+  background-image:
+    radial-gradient(circle at 20% 0%, rgba(56, 189, 248, 0.08), transparent 35%),
+    radial-gradient(circle at 100% 100%, rgba(14, 165, 233, 0.08), transparent 32%),
+    linear-gradient(120deg, rgba(255, 255, 255, 0.9), rgba(240, 249, 255, 0.9), rgba(255, 255, 255, 0.85));
+  background-size: 180% 180%;
+  animation: pulse-surface-shift 14s ease infinite;
+}
