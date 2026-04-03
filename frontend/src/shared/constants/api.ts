@@ -1,10 +1,15 @@
 export const API_ENDPOINTS = {
   authRegister: "/auth/register",
   authLogin: "/auth/login",
+  authRefresh: "/auth/refresh",
+  authChangePassword: "/auth/change-password",
   profile: "/user/profile",
   courses: "/courses",
   enrollments: "/enrollments",
   myEnrollments: "/enrollments/my",
+  notes: "/notes",
+  myNotes: "/notes/my",
   aiAsk: "/ai/ask",
   aiHistory: "/ai/history",
+  adminUsers: "/admin/users",
 } as const;

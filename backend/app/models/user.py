@@ -17,5 +17,6 @@ class User(Base, TimestampMixin):
     sessions = relationship("Session", back_populates="user", cascade="all, delete-orphan")
     password_resets = relationship("PasswordReset", back_populates="user", cascade="all, delete-orphan")
     enrollments = relationship("Enrollment", back_populates="user", cascade="all, delete-orphan")
+    notes = relationship("CourseNote", back_populates="user", cascade="all, delete-orphan")
     feedback_tickets = relationship("FeedbackTicket", back_populates="user", cascade="all, delete-orphan")
     ai_chat_sessions = relationship("AIChatSession", back_populates="user", cascade="all, delete-orphan")

@@ -2,6 +2,7 @@ import { API_ENDPOINTS } from "@/shared/constants/api";
 import { mockCoursesApi, mockEnrollmentsApi } from "@/shared/mocks/mockData";
 import { apiClient } from "@/services/api/client";
 import { USE_MOCK_API } from "@/services/api/config";
+import { readStoredTokens } from "@/services/api/tokenStorage";
 import type { EnrollPayload, ProgressPayload } from "@/types/api";
 import type { Enrollment, EnrollmentWithCourse } from "@/types/domain";
 
@@ -17,12 +18,16 @@ const mapWithCourse = async (items: Enrollment[]): Promise<EnrollmentWithCourse[
 };
 
 export const enrollmentsApi = {
-  async enroll(payload: EnrollPayload): Promise<Enrollment> {
+  async enroll(payload: EnrollPayload): Promise<EnrollmentWithCourse> {
     if (USE_MOCK_API) {
-      return mockEnrollmentsApi.enroll(payload.courseId, localStorage.getItem("access_token") ?? undefined);
+      const enrollment = await mockEnrollmentsApi.enroll(payload.courseId, readStoredTokens().accessToken ?? undefined);
+      return {
+        ...enrollment,
+        course: await mockCoursesApi.byId(enrollment.courseId),
+      };
     }
 
-    const response = await apiClient.post<Enrollment>(API_ENDPOINTS.enrollments, payload);
+    const response = await apiClient.post<EnrollmentWithCourse>(API_ENDPOINTS.enrollments, payload);
     return response.data;
   },
 

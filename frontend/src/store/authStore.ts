@@ -1,7 +1,16 @@
 import { create } from "zustand";
 
 import { authApi } from "@/services/api/authApi";
-import type { LoginPayload, RegisterPayload } from "@/types/api";
+import { registerAuthSessionHandlers } from "@/services/api/authSession";
+import {
+  clearStoredTokens,
+  readStoredTokens,
+  writeStoredTokens,
+} from "@/services/api/tokenStorage";
+import { useChatStore } from "@/store/chatStore";
+import { useCourseNotesStore } from "@/store/courseNotesStore";
+import { useEnrollmentStore } from "@/store/enrollmentStore";
+import type { ChangePasswordPayload, LoginPayload, RegisterPayload, TokenPair } from "@/types/api";
 import type { UserProfile } from "@/types/domain";
 
 interface AuthState {
@@ -13,29 +22,22 @@ interface AuthState {
   bootstrap: () => Promise<void>;
   login: (payload: LoginPayload) => Promise<void>;
   register: (payload: RegisterPayload) => Promise<void>;
+  changePassword: (payload: ChangePasswordPayload) => Promise<void>;
   logout: () => void;
   clearError: () => void;
 }
 
-const ACCESS_TOKEN_KEY = "access_token";
-const REFRESH_TOKEN_KEY = "refresh_token";
-
-const readStoredToken = (): { accessToken: string | null; refreshToken: string | null } => ({
-  accessToken: localStorage.getItem(ACCESS_TOKEN_KEY),
-  refreshToken: localStorage.getItem(REFRESH_TOKEN_KEY),
-});
-
-const persistTokens = (accessToken: string, refreshToken: string): void => {
-  localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
-  localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+const clearUserBoundState = (): void => {
+  useCourseNotesStore.getState().clear();
+  useEnrollmentStore.getState().clear();
+  useChatStore.getState().clear();
 };
 
-const clearTokens = (): void => {
-  localStorage.removeItem(ACCESS_TOKEN_KEY);
-  localStorage.removeItem(REFRESH_TOKEN_KEY);
+const persistTokens = (tokens: TokenPair): void => {
+  writeStoredTokens(tokens.accessToken, tokens.refreshToken);
 };
 
-const initialTokens = readStoredToken();
+const initialTokens = readStoredTokens();
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
@@ -45,9 +47,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   error: null,
 
   bootstrap: async () => {
-    const { accessToken, refreshToken } = readStoredToken();
+    const { accessToken, refreshToken } = readStoredTokens();
 
     if (!accessToken || !refreshToken) {
+      clearUserBoundState();
       set({ user: null, accessToken: null, refreshToken: null, isLoading: false });
       return;
     }
@@ -56,10 +59,38 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     try {
       const user = await authApi.profile();
-      set({ user, isLoading: false });
+      const latestTokens = readStoredTokens();
+      set({
+        user,
+        accessToken: latestTokens.accessToken,
+        refreshToken: latestTokens.refreshToken,
+        isLoading: false,
+      });
     } catch {
-      clearTokens();
-      set({ user: null, accessToken: null, refreshToken: null, isLoading: false, error: "Сессия истекла" });
+      const latestTokens = readStoredTokens();
+
+      if (!latestTokens.refreshToken) {
+        clearUserBoundState();
+        set({ user: null, accessToken: null, refreshToken: null, isLoading: false, error: "Сессия истекла" });
+        return;
+      }
+
+      try {
+        const tokens = await authApi.refresh({ refreshToken: latestTokens.refreshToken });
+        persistTokens(tokens);
+        const user = await authApi.profile();
+        set({
+          user,
+          accessToken: tokens.accessToken,
+          refreshToken: tokens.refreshToken,
+          isLoading: false,
+          error: null,
+        });
+      } catch {
+        clearStoredTokens();
+        clearUserBoundState();
+        set({ user: null, accessToken: null, refreshToken: null, isLoading: false, error: "Сессия истекла" });
+      }
     }
   },
 
@@ -68,7 +99,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     try {
       const tokens = await authApi.login(payload);
-      persistTokens(tokens.accessToken, tokens.refreshToken);
+      persistTokens(tokens);
       const user = await authApi.profile();
 
       set({
@@ -79,7 +110,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Ошибка входа";
-      clearTokens();
+      clearStoredTokens();
+      clearUserBoundState();
       set({ isLoading: false, error: message, user: null, accessToken: null, refreshToken: null });
       throw error;
     }
@@ -90,7 +122,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     try {
       const tokens = await authApi.register(payload);
-      persistTokens(tokens.accessToken, tokens.refreshToken);
+      persistTokens(tokens);
       const user = await authApi.profile();
 
       set({
@@ -101,14 +133,37 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Ошибка регистрации";
-      clearTokens();
+      clearStoredTokens();
+      clearUserBoundState();
       set({ isLoading: false, error: message, user: null, accessToken: null, refreshToken: null });
       throw error;
     }
   },
 
+  changePassword: async (payload) => {
+    set({ isLoading: true, error: null });
+
+    try {
+      const tokens = await authApi.changePassword(payload);
+      persistTokens(tokens);
+      const user = await authApi.profile();
+
+      set({
+        user,
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+        isLoading: false,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Не удалось сменить пароль";
+      set({ isLoading: false, error: message });
+      throw error;
+    }
+  },
+
   logout: () => {
-    clearTokens();
+    clearStoredTokens();
+    clearUserBoundState();
     set({ user: null, accessToken: null, refreshToken: null, error: null });
   },
 
@@ -118,3 +173,23 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 }));
+
+registerAuthSessionHandlers({
+  onSessionUpdated: (tokens) => {
+    useAuthStore.setState({
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      error: null,
+    });
+  },
+  onUnauthorized: () => {
+    clearUserBoundState();
+    useAuthStore.setState({
+      user: null,
+      accessToken: null,
+      refreshToken: null,
+      isLoading: false,
+      error: "Сессия истекла",
+    });
+  },
+});

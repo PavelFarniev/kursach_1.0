@@ -79,6 +79,7 @@ const users: MockUser[] = [
     id: 1,
     email: "demo@student.ai",
     fullName: "Demo Student",
+    isAdmin: true,
     password: "demo123",
   },
 ];
@@ -193,6 +194,7 @@ export const mockAuthApi = {
       id: nextUserId,
       email: payload.email,
       fullName: payload.fullName,
+      isAdmin: false,
       password: payload.password,
     };
 
@@ -223,6 +225,7 @@ export const mockAuthApi = {
       id: user.id,
       email: user.email,
       fullName: user.fullName,
+      isAdmin: user.isAdmin,
     };
   },
 };

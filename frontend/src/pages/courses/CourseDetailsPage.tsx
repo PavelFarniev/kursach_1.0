@@ -1,6 +1,6 @@
 import { ArrowLeft, PlayCircle } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import { ProgressWidget } from "@/widgets/course/ProgressWidget";
 export function CourseDetailsPage(): JSX.Element {
   const params = useParams<{ id: string }>();
   const courseId = Number(params.id);
+  const navigate = useNavigate();
 
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -26,7 +27,6 @@ export function CourseDetailsPage(): JSX.Element {
   const enrollments = useEnrollmentStore((state) => state.enrollments);
   const fetchMyEnrollments = useEnrollmentStore((state) => state.fetchMyEnrollments);
   const enrollToCourse = useEnrollmentStore((state) => state.enrollToCourse);
-  const updateProgress = useEnrollmentStore((state) => state.updateProgress);
 
   const enrollment = useMemo(() => enrollments.find((item) => item.courseId === courseId), [enrollments, courseId]);
 
@@ -39,7 +39,7 @@ export function CourseDetailsPage(): JSX.Element {
     void fetchMyEnrollments();
   }, [courseId, fetchCourseById, fetchMyEnrollments]);
 
-  const handleStartOrContinue = async (): Promise<void> => {
+  const handleOpenLearningPage = async (): Promise<void> => {
     if (!selectedCourse) {
       return;
     }
@@ -47,18 +47,14 @@ export function CourseDetailsPage(): JSX.Element {
     setActionLoading(true);
 
     try {
-      await enrollToCourse(selectedCourse.id);
+      if (!enrollment) {
+        await enrollToCourse(selectedCourse.id);
+      }
+
+      navigate(`/courses/${selectedCourse.id}/learn`);
     } finally {
       setActionLoading(false);
     }
-  };
-
-  const handleProgressChange = async (nextPercent: number): Promise<void> => {
-    if (!enrollment) {
-      return;
-    }
-
-    await updateProgress(enrollment.id, Math.min(100, Math.max(0, nextPercent)));
   };
 
   if (!Number.isFinite(courseId)) {
@@ -92,7 +88,7 @@ export function CourseDetailsPage(): JSX.Element {
           <CardDescription className="max-w-3xl text-base">{selectedCourse.description}</CardDescription>
         </CardHeader>
         <CardContent>
-          <Button onClick={() => void handleStartOrContinue()} disabled={actionLoading}>
+          <Button onClick={() => void handleOpenLearningPage()} disabled={actionLoading}>
             <PlayCircle className="mr-2 h-4 w-4" />
             {enrollment ? "Продолжить курс" : "Начать курс"}
           </Button>
@@ -101,12 +97,13 @@ export function CourseDetailsPage(): JSX.Element {
 
       <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
         <ProgressWidget
+          mode="overview"
           progressPercent={enrollment?.progressPercent ?? 0}
           status={enrollment?.status ?? "active"}
           lessonsCount={selectedCourse.lessonsCount}
           isEnrolled={Boolean(enrollment)}
-          onStartCourse={handleStartOrContinue}
-          onProgressChange={handleProgressChange}
+          onStartCourse={handleOpenLearningPage}
+          onContinueCourse={handleOpenLearningPage}
         />
 
         <Tabs defaultValue="overview">
@@ -129,6 +126,16 @@ export function CourseDetailsPage(): JSX.Element {
                 <p>2. После практики отправляйте в AI-чат вопросы по ошибкам.</p>
                 <p>3. Доводите прогресс до 100% перед пробным экзаменом.</p>
               </CardContent>
+            </Card>
+
+            <Card className="border-border/70 bg-card/72">
+              <CardHeader>
+                <CardTitle className="text-xl">Полный режим прохождения</CardTitle>
+                <CardDescription>
+                  Кнопки «Начать курс» и «Продолжить курс» открывают отдельную учебную страницу в формате обычных последовательных слайдов
+                  с теорией и сохранением прогресса.
+                </CardDescription>
+              </CardHeader>
             </Card>
           </TabsContent>
 

@@ -8,6 +8,8 @@ interface CourseState {
   courses: Course[];
   selectedCourse: Course | null;
   filters: Required<CourseFilters>;
+  availableCategories: string[];
+  availableLevels: string[];
   isLoadingList: boolean;
   isLoadingCourse: boolean;
   error: string | null;
@@ -22,10 +24,19 @@ const DEFAULT_FILTERS: Required<CourseFilters> = {
   level: "all",
 };
 
+const buildUniqueValues = <T extends string>(items: T[]): T[] => Array.from(new Set(items));
+
+const isDefaultFilters = (filters: Required<CourseFilters>): boolean =>
+  filters.search === DEFAULT_FILTERS.search &&
+  filters.category === DEFAULT_FILTERS.category &&
+  filters.level === DEFAULT_FILTERS.level;
+
 export const useCourseStore = create<CourseState>((set, get) => ({
   courses: [],
   selectedCourse: null,
   filters: DEFAULT_FILTERS,
+  availableCategories: [],
+  availableLevels: [],
   isLoadingList: false,
   isLoadingCourse: false,
   error: null,
@@ -39,8 +50,18 @@ export const useCourseStore = create<CourseState>((set, get) => ({
 
     try {
       const { filters } = get();
-      const courses = await coursesApi.list(filters);
-      set({ courses, isLoadingList: false });
+      const shouldUseCatalogSnapshot = get().availableCategories.length === 0 || get().availableLevels.length === 0;
+      const allCourses = shouldUseCatalogSnapshot ? await coursesApi.list() : null;
+      const courses = allCourses && isDefaultFilters(filters) ? allCourses : await coursesApi.list(filters);
+
+      set({
+        courses,
+        availableCategories: allCourses
+          ? buildUniqueValues(allCourses.map((course) => course.category))
+          : get().availableCategories,
+        availableLevels: allCourses ? buildUniqueValues(allCourses.map((course) => course.level)) : get().availableLevels,
+        isLoadingList: false,
+      });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Не удалось загрузить курсы";
       set({ isLoadingList: false, error: message });

@@ -1,4 +1,4 @@
-import { BookOpenCheck, RotateCcw, Sparkles, TrendingUp, Undo2 } from "lucide-react";
+import { BookOpenCheck, RotateCcw, Sparkles, Undo2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
@@ -9,12 +9,14 @@ import { Select } from "@/components/ui/select";
 import type { EnrollmentStatus } from "@/types/domain";
 
 interface ProgressWidgetProps {
+  mode?: "overview" | "learning";
   progressPercent: number;
   status: EnrollmentStatus;
   lessonsCount: number;
   isEnrolled: boolean;
   onStartCourse: () => Promise<void>;
-  onProgressChange: (nextPercent: number) => Promise<void>;
+  onContinueCourse?: () => Promise<void>;
+  onProgressChange?: (nextPercent: number) => Promise<void>;
 }
 
 const getStageTitle = (progressPercent: number): string => {
@@ -46,13 +48,16 @@ const getStatusLabel = (status: EnrollmentStatus, isEnrolled: boolean): string =
 };
 
 export function ProgressWidget({
+  mode = "learning",
   progressPercent,
   status,
   lessonsCount,
   isEnrolled,
   onStartCourse,
+  onContinueCourse,
   onProgressChange,
 }: ProgressWidgetProps): JSX.Element {
+  const isOverviewMode = mode === "overview";
   const isCompleted = status === "completed";
   const safeLessonsCount = Math.max(1, lessonsCount);
   const [isPending, setIsPending] = useState(false);
@@ -83,12 +88,24 @@ export function ProgressWidget({
     setIsPending(true);
 
     try {
+      if (isOverviewMode) {
+        if (!isEnrolled) {
+          await onStartCourse();
+          return;
+        }
+
+        if (onContinueCourse) {
+          await onContinueCourse();
+          return;
+        }
+      }
+
       if (!isEnrolled) {
         await onStartCourse();
         return;
       }
 
-      if (!isCompleted) {
+      if (!isCompleted && onProgressChange) {
         await onProgressChange(nextPercent);
       }
     } finally {
@@ -97,6 +114,10 @@ export function ProgressWidget({
   };
 
   const handleReturnToLesson = async (): Promise<void> => {
+    if (!onProgressChange) {
+      return;
+    }
+
     setIsPending(true);
 
     try {
@@ -109,6 +130,10 @@ export function ProgressWidget({
   };
 
   const handleRestartCourse = async (): Promise<void> => {
+    if (!onProgressChange) {
+      return;
+    }
+
     setIsPending(true);
 
     try {
@@ -149,35 +174,23 @@ export function ProgressWidget({
           </p>
         </div>
 
-        {!isCompleted && (
+        {(isOverviewMode || !isCompleted || !isEnrolled) && (
           <Button className="w-full" variant="default" onClick={() => void handlePrimaryAction()} disabled={isPending}>
             {!isEnrolled ? (
               <>
                 <Sparkles className="mr-2 h-4 w-4" />
-                Начать обучение
+                {isOverviewMode ? "Начать курс" : "Начать обучение"}
               </>
             ) : (
               <>
                 <BookOpenCheck className="mr-2 h-4 w-4" />
-                Завершить урок
+                {isOverviewMode ? "Продолжить курс" : "Завершить урок"}
               </>
             )}
           </Button>
         )}
 
-        {isEnrolled && !isCompleted && (
-          <Button
-            className="w-full"
-            variant="outline"
-            onClick={() => void onProgressChange(Math.min(100, progressPercent + 10))}
-            disabled={isPending}
-          >
-            <TrendingUp className="mr-2 h-4 w-4" />
-            Быстрый прогресс (+10%)
-          </Button>
-        )}
-
-        {isEnrolled && isCompleted && (
+        {!isOverviewMode && isEnrolled && isCompleted && (
           <div className="space-y-3 rounded-lg border border-border/70 bg-background/60 p-3">
             <p className="text-sm text-muted-foreground">Курс завершён. Вы можете вернуться к любому уроку или пройти его заново.</p>
 

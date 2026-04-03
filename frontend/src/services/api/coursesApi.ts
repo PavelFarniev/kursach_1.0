@@ -27,13 +27,3 @@ export const coursesApi = {
     return response.data;
   },
 };
-
-export const coursesMetaApi = {
-  categories(): string[] {
-    return mockCoursesApi.categories();
-  },
-
-  levels(): string[] {
-    return mockCoursesApi.levels();
-  },
-};

@@ -10,6 +10,7 @@ interface ChatState {
   errorByCourse: Record<number, string | null>;
   loadHistory: (courseId: number) => Promise<void>;
   sendMessage: (courseId: number, message: string) => Promise<void>;
+  clear: () => void;
 }
 
 const toUserMessage = (content: string): ChatMessage => ({
@@ -130,5 +131,14 @@ export const useChatStore = create<ChatState>((set, get) => ({
         },
       }));
     }
+  },
+
+  clear: () => {
+    set({
+      messagesByCourse: {},
+      isLoadingHistoryByCourse: {},
+      isSendingByCourse: {},
+      errorByCourse: {},
+    });
   },
 }));

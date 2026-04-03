@@ -1,13 +1,14 @@
 import { useEffect } from "react";
 
 import { CourseFilters } from "@/features/courses/CourseFilters";
-import { coursesMetaApi } from "@/services/api/coursesApi";
 import { useCourseStore } from "@/store/courseStore";
 import { CourseCard } from "@/widgets/course/CourseCard";
 
 export function CoursesPage(): JSX.Element {
   const courses = useCourseStore((state) => state.courses);
   const filters = useCourseStore((state) => state.filters);
+  const categories = useCourseStore((state) => state.availableCategories);
+  const levels = useCourseStore((state) => state.availableLevels);
   const isLoadingList = useCourseStore((state) => state.isLoadingList);
   const error = useCourseStore((state) => state.error);
   const setFilters = useCourseStore((state) => state.setFilters);
@@ -16,9 +17,6 @@ export function CoursesPage(): JSX.Element {
   useEffect(() => {
     void fetchCourses();
   }, [filters, fetchCourses]);
-
-  const categories = coursesMetaApi.categories();
-  const levels = coursesMetaApi.levels();
 
   return (
     <section className="space-y-6 animate-fade-in-up">

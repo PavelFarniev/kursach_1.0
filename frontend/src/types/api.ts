@@ -1,7 +1,8 @@
 import type {
+  AdminUser,
   ChatMessage,
+  CourseNote,
   Course,
-  Enrollment,
   EnrollmentWithCourse,
   UserProfile,
 } from "@/types/domain";
@@ -17,10 +18,19 @@ export interface LoginPayload {
   password: string;
 }
 
+export interface RefreshTokenPayload {
+  refreshToken: string;
+}
+
 export interface TokenPair {
   accessToken: string;
   refreshToken: string;
   tokenType: "bearer";
+}
+
+export interface ChangePasswordPayload {
+  currentPassword: string;
+  newPassword: string;
 }
 
 export interface CourseFilters {
@@ -35,6 +45,22 @@ export interface EnrollPayload {
 
 export interface ProgressPayload {
   progressPercent: number;
+}
+
+export interface CreateNotePayload {
+  courseId: number;
+  content: string;
+}
+
+export interface AdminUsersFilters {
+  search?: string;
+}
+
+export interface UpdateAdminUserPayload {
+  email?: string;
+  fullName?: string;
+  isActive?: boolean;
+  isAdmin?: boolean;
 }
 
 export interface AIAskPayload {
@@ -55,7 +81,9 @@ export interface AIHistoryResponse {
 export interface AuthApi {
   register(payload: RegisterPayload): Promise<TokenPair>;
   login(payload: LoginPayload): Promise<TokenPair>;
-  getProfile(): Promise<UserProfile>;
+  refresh(payload: RefreshTokenPayload): Promise<TokenPair>;
+  profile(): Promise<UserProfile>;
+  changePassword(payload: ChangePasswordPayload): Promise<TokenPair>;
 }
 
 export interface CoursesApi {
@@ -64,7 +92,7 @@ export interface CoursesApi {
 }
 
 export interface EnrollmentsApi {
-  enroll(payload: EnrollPayload): Promise<Enrollment>;
+  enroll(payload: EnrollPayload): Promise<EnrollmentWithCourse>;
   my(): Promise<EnrollmentWithCourse[]>;
   patchProgress(enrollmentId: number, payload: ProgressPayload): Promise<EnrollmentWithCourse>;
 }
@@ -72,4 +100,16 @@ export interface EnrollmentsApi {
 export interface AIApi {
   ask(payload: AIAskPayload): Promise<AIAskResponse>;
   history(courseId: number): Promise<AIHistoryResponse>;
+}
+
+export interface NotesApi {
+  my(): Promise<CourseNote[]>;
+  create(payload: CreateNotePayload): Promise<CourseNote>;
+  remove(noteId: number): Promise<void>;
+}
+
+export interface AdminApi {
+  listUsers(filters?: AdminUsersFilters): Promise<AdminUser[]>;
+  updateUser(userId: number, payload: UpdateAdminUserPayload): Promise<AdminUser>;
+  deleteUser(userId: number): Promise<void>;
 }

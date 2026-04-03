@@ -1,9 +1,11 @@
-import { Mail, User } from "lucide-react";
+import { Mail, ShieldCheck, User } from "lucide-react";
 import { useEffect } from "react";
 
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuthStore } from "@/store/authStore";
 import { useEnrollmentStore } from "@/store/enrollmentStore";
+import { PasswordChangeCard } from "@/widgets/profile/PasswordChangeCard";
 import { ProfileCoursesList } from "@/widgets/profile/ProfileCoursesList";
 
 export function ProfilePage(): JSX.Element {
@@ -41,8 +43,16 @@ export function ProfilePage(): JSX.Element {
               <Mail className="h-4 w-4 text-muted-foreground" />
               <span className="text-muted-foreground">{user?.email}</span>
             </p>
+            {user?.isAdmin ? (
+              <p className="inline-flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-warning" />
+                <Badge variant="warning">Администратор</Badge>
+              </p>
+            ) : null}
           </CardContent>
         </Card>
+
+        <PasswordChangeCard />
 
         <div className="space-y-3">
           <div className="h-px w-full bg-border/80" />

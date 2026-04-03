@@ -1,4 +1,4 @@
-import { BookOpenText, GraduationCap, LogOut, UserRound } from "lucide-react";
+import { BookOpenText, GraduationCap, LogOut, ShieldCheck, UserRound } from "lucide-react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 
 import { cn } from "@/shared/lib/utils";
@@ -15,6 +15,7 @@ export function UnifiedHeader({ sticky = false }: UnifiedHeaderProps): JSX.Eleme
 
   const isProfilePage = location.pathname.startsWith("/profile");
   const isCoursesPage = location.pathname.startsWith("/courses");
+  const isAdminPage = location.pathname.startsWith("/admin");
 
   return (
     <header className={cn("z-20 border-b border-border/80 bg-card/92 backdrop-blur-md", sticky && "sticky top-0")}>
@@ -31,16 +32,18 @@ export function UnifiedHeader({ sticky = false }: UnifiedHeaderProps): JSX.Eleme
           </NavLink>
 
           <nav className="hidden flex-1 items-center justify-center md:flex">
-            <NavLink
-              to="/courses"
-              className={cn(
-                "inline-flex items-center gap-2 rounded-lg px-3 py-1 text-sm font-semibold transition",
-                isCoursesPage ? "bg-secondary text-secondary-foreground" : "text-muted-foreground hover:bg-secondary/70 hover:text-foreground",
-              )}
-            >
-              <BookOpenText className="h-4 w-4" />
-              Курсы
-            </NavLink>
+            <div className="inline-flex items-center gap-2 rounded-xl border border-border/75 bg-card/88 p-1">
+              <NavLink
+                to="/courses"
+                className={cn(
+                  "inline-flex items-center gap-2 rounded-lg px-3 py-1 text-sm font-semibold transition",
+                  isCoursesPage ? "bg-secondary text-secondary-foreground" : "text-muted-foreground hover:bg-secondary/70 hover:text-foreground",
+                )}
+              >
+                <BookOpenText className="h-4 w-4" />
+                Курсы
+              </NavLink>
+            </div>
           </nav>
 
           {user ? (
@@ -55,13 +58,30 @@ export function UnifiedHeader({ sticky = false }: UnifiedHeaderProps): JSX.Eleme
                 <div
                   className={cn(
                     "flex h-7 w-7 items-center justify-center rounded-lg",
-                    isProfilePage ? "bg-background/60" : "bg-secondary",
+                    isProfilePage || isAdminPage ? "bg-background/60" : "bg-secondary",
                   )}
                 >
                   <UserRound className="h-4 w-4" />
                 </div>
                 <span className="max-w-[152px] truncate">{user.fullName}</span>
               </NavLink>
+
+              {user.isAdmin ? (
+                <>
+                  <div className="mx-1 h-5 w-px bg-border/70" />
+
+                  <NavLink
+                    to="/admin/users"
+                    className={cn(
+                      "inline-flex items-center gap-2 rounded-lg px-2.5 py-1 text-sm font-semibold transition",
+                      isAdminPage ? "bg-secondary text-secondary-foreground" : "hover:bg-secondary/70",
+                    )}
+                  >
+                    <ShieldCheck className="h-4 w-4" />
+                    Админка
+                  </NavLink>
+                </>
+              ) : null}
 
               <div className="mx-1 h-5 w-px bg-border/70" />
 

@@ -1,39 +1,33 @@
 # Backend (FastAPI) - AI Exam Prep Platform
 
-This folder is a prepared backend foundation for a future full implementation.
-Current scope: architecture-aligned skeleton only, separated from frontend.
+Рабочий backend V1 для auth, каталога курсов, enrollments, заметок и базовых AI/feedback endpoints.
 
-## Planned stack
+## Stack
 - Python + FastAPI
-- PostgreSQL
 - SQLAlchemy ORM
 - Alembic migrations
+- SQLite по умолчанию через `DATABASE_URL=sqlite:///./app.db`
 - JWT auth (access + refresh)
 - passlib bcrypt password hashing
-- Pydantic schemas
-- OpenAI Python library for AI assistant endpoints
+- Pydantic schemas с camelCase JSON
 
-## Why this structure
-The structure follows:
-- Use Case Diagram (Guest / User / Admin)
-- User Story Map core flow (auth -> course catalog -> course learning -> AI chat -> profile)
-- ERD entities and relationships
-
-## ERD entities covered in code skeleton
+## Реализованные сущности
 - User
 - Session
 - PasswordReset
 - Course
 - Enrollment
+- CourseNote
 - FeedbackTicket
 - AIChatSession
 - AIChatMessage
 
-## Planned API endpoints (v1)
+## Основные API endpoints
 ### Auth
 - `POST /api/v1/auth/register`
 - `POST /api/v1/auth/login`
 - `POST /api/v1/auth/refresh`
+- `POST /api/v1/auth/change-password`
 - `POST /api/v1/auth/password-reset/request`
 - `POST /api/v1/auth/password-reset/confirm`
 
@@ -49,35 +43,31 @@ The structure follows:
 - `GET /api/v1/enrollments/my`
 - `PATCH /api/v1/enrollments/{enrollment_id}/progress`
 
-### AI assistant
-- `POST /api/v1/ai/ask`
-- `GET /api/v1/ai/history`
-
-### Feedback
-- `POST /api/v1/feedback/tickets`
-- `GET /api/v1/admin/feedback/tickets`
-
-### Admin (future)
-- `GET /api/v1/admin/courses`
-- `POST /api/v1/admin/courses`
-- `PATCH /api/v1/admin/courses/{course_id}`
-- `GET /api/v1/admin/users`
+### Notes
+- `GET /api/v1/notes/my`
+- `POST /api/v1/notes`
+- `DELETE /api/v1/notes/{note_id}`
 
 ## Folder overview
 - `app/api` - routers and endpoint modules
-- `app/models` - SQLAlchemy models based on ERD
+- `app/models` - SQLAlchemy models
 - `app/schemas` - request/response Pydantic models
-- `app/services` - domain services (auth, courses, ai, etc.)
-- `app/core` - settings, db, security, shared infra
+- `app/services` - domain services
+- `app/core` - settings, DB, security
+- `alembic` - migration environment and versions
 
-## Run (when backend is implemented)
+## Local run
 ```bash
 cd backend
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+alembic upgrade head
 uvicorn app.main:app --reload
 ```
 
-## Current status
-This is a prepared architecture scaffold. Business logic, DB migrations, and real integrations are intentionally deferred to later iterations.
+Приложение больше не создаёт таблицы через `Base.metadata.create_all()`. Если схема не применена, startup пропустит сидирование и выведет предупреждение.
+
+## Seed data
+- При старте backend сидирует каталог курсов, если таблицы уже созданы миграциями.
+- Также создаётся demo-пользователь `demo@student.ai / demo123`, если его ещё нет.

@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { coursesApi } from "@/services/api/coursesApi";
 import { cn } from "@/shared/lib/utils";
+import { useAuthStore } from "@/store/authStore";
 import { useCourseNotesStore } from "@/store/courseNotesStore";
 
 type PulseMode = "today" | "week" | "sprint";
@@ -94,21 +95,23 @@ const buildSparklinePath = (points: number[], width: number, height: number): st
 export function LearningPulsePanel(): JSX.Element {
   const [mode, setMode] = useState<PulseMode>("today");
   const [courseTitleById, setCourseTitleById] = useState<Record<number, string>>({});
-  const notesListByCourseId = useCourseNotesStore((state) => state.notesListByCourseId);
+  const isAuthorized = useAuthStore((state) => Boolean(state.user && state.accessToken));
+  const notesByCourseId = useCourseNotesStore((state) => state.notesByCourseId);
   const removeNoteForCourse = useCourseNotesStore((state) => state.removeNoteForCourse);
   const data = PULSE_DATA[mode];
 
   const aggregatedCourseNotes = useMemo(
     () =>
-      Object.entries(notesListByCourseId).flatMap(([rawCourseId, notes]) =>
-        (Array.isArray(notes) ? notes : []).map((note, index) => ({
-          id: `${rawCourseId}-${index}-${note}`,
-          courseId: Number(rawCourseId),
-          noteIndex: index,
-          note,
-        })),
-      ),
-    [notesListByCourseId],
+      !isAuthorized
+        ? []
+        : Object.entries(notesByCourseId).flatMap(([rawCourseId, notes]) =>
+            (Array.isArray(notes) ? notes : []).map((note) => ({
+              id: note.id,
+              courseId: Number(rawCourseId),
+              content: note.content,
+            })),
+          ),
+    [isAuthorized, notesByCourseId],
   );
 
   const notedCourseIds = useMemo(
@@ -274,8 +277,8 @@ export function LearningPulsePanel(): JSX.Element {
                     <div key={item.id} className="flex items-start justify-between gap-3 rounded-lg bg-muted/40 px-2 py-1.5">
                       <p className="flex items-start gap-2">
                         <BookText className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
-                        <span className="text-foreground">
-                          {item.note}{" "}
+                          <span className="text-foreground">
+                          {item.content}{" "}
                           <span className="text-xs text-muted-foreground">
                             ({courseTitleById[item.courseId] ?? `Курс ${item.courseId}`})
                           </span>
@@ -284,7 +287,7 @@ export function LearningPulsePanel(): JSX.Element {
                       <button
                         type="button"
                         aria-label="Удалить заметку"
-                        onClick={() => removeNoteForCourse(item.courseId, item.noteIndex)}
+                        onClick={() => void removeNoteForCourse(item.courseId, item.id)}
                         className="rounded-md p-1 text-muted-foreground transition hover:bg-background hover:text-foreground"
                       >
                         <Trash2 className="h-4 w-4" />

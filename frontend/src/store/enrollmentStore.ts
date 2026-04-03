@@ -1,6 +1,5 @@
 import { create } from "zustand";
 
-import { coursesApi } from "@/services/api/coursesApi";
 import { enrollmentsApi } from "@/services/api/enrollmentsApi";
 import type { EnrollmentWithCourse } from "@/types/domain";
 
@@ -12,6 +11,7 @@ interface EnrollmentState {
   enrollToCourse: (courseId: number) => Promise<EnrollmentWithCourse>;
   updateProgress: (enrollmentId: number, progressPercent: number) => Promise<void>;
   getEnrollmentByCourseId: (courseId: number) => EnrollmentWithCourse | undefined;
+  clear: () => void;
 }
 
 export const useEnrollmentStore = create<EnrollmentState>((set, get) => ({
@@ -40,15 +40,8 @@ export const useEnrollmentStore = create<EnrollmentState>((set, get) => ({
     }
 
     const enrollment = await enrollmentsApi.enroll({ courseId });
-    const course = await coursesApi.getById(courseId);
-
-    const withCourse: EnrollmentWithCourse = {
-      ...enrollment,
-      course,
-    };
-
-    set((state) => ({ enrollments: [...state.enrollments, withCourse] }));
-    return withCourse;
+    set((state) => ({ enrollments: [...state.enrollments, enrollment] }));
+    return enrollment;
   },
 
   updateProgress: async (enrollmentId, progressPercent) => {
@@ -71,8 +64,13 @@ export const useEnrollmentStore = create<EnrollmentState>((set, get) => ({
     } catch (error) {
       const message = error instanceof Error ? error.message : "Не удалось обновить прогресс";
       set({ error: message });
+      throw (error instanceof Error ? error : new Error(message));
     }
   },
 
   getEnrollmentByCourseId: (courseId) => get().enrollments.find((item) => item.courseId === courseId),
+
+  clear: () => {
+    set({ enrollments: [], isLoading: false, error: null });
+  },
 }));

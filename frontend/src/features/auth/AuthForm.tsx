@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuthStore } from "@/store/authStore";
+import { useCourseNotesStore } from "@/store/courseNotesStore";
 
 type AuthMode = "login" | "register";
 
@@ -35,6 +36,7 @@ export function AuthForm({ mode }: AuthFormProps): JSX.Element {
   const login = useAuthStore((state) => state.login);
   const register = useAuthStore((state) => state.register);
   const clearError = useAuthStore((state) => state.clearError);
+  const bootstrapNotes = useCourseNotesStore((state) => state.bootstrap);
 
   const [formError, setFormError] = useState<string | null>(null);
   const [loginValues, setLoginValues] = useState<LoginFields>({ email: "", password: "" });
@@ -116,6 +118,7 @@ export function AuthForm({ mode }: AuthFormProps): JSX.Element {
         });
       }
 
+      await bootstrapNotes();
       navigate("/courses");
     } catch {
       // Error message comes from store.
