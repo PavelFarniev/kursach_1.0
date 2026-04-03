@@ -19,6 +19,30 @@ export interface AdminUser {
   updatedAt: string;
 }
 
+export interface AdminCourseSlide {
+  id?: number;
+  orderIndex: number;
+  title: string;
+  summary: string;
+  theoryBlocks: string[];
+  bullets: string[];
+  example: string;
+  practiceTask: string;
+}
+
+export interface AdminCourse {
+  id: number;
+  title: string;
+  description: string;
+  category: string;
+  level: string;
+  lessonsCount: number;
+  estimatedHours: number;
+  slides: AdminCourseSlide[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface CourseSlide {
   id: string;
   title: string;

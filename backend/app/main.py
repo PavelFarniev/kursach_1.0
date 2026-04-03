@@ -9,7 +9,6 @@ from app.api.v1.router import api_router
 from app.core.config import settings
 from app.core.db import SessionLocal, engine
 from app.services.auth_service import seed_demo_data
-from app.services.course_service import seed_courses
 
 logger = logging.getLogger(__name__)
 REQUIRED_SEED_TABLES = {"users", "courses", "enrollments"}
@@ -25,7 +24,6 @@ def _has_seed_schema() -> bool:
 async def lifespan(_: FastAPI):
     if _has_seed_schema():
         with SessionLocal() as db:
-            seed_courses(db)
             seed_demo_data(db)
     else:
         logger.warning("Database schema is missing. Run 'alembic upgrade head' before starting the app.")

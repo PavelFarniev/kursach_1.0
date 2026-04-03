@@ -46,7 +46,7 @@ const formatDate = (value: string): string =>
     minute: "2-digit",
   });
 
-export function AdminUsersPage(): JSX.Element {
+export function AdminUsersSection(): JSX.Element {
   const currentUser = useAuthStore((state) => state.user);
   const [users, setUsers] = useState<AdminUser[]>(EMPTY_USERS);
   const [searchDraft, setSearchDraft] = useState("");
@@ -194,7 +194,7 @@ export function AdminUsersPage(): JSX.Element {
     <section className="space-y-6 animate-fade-in-up">
       <div className="space-y-2">
         <p className="inline-flex rounded-full bg-secondary px-3 py-1 text-xs font-semibold text-secondary-foreground">
-          Админка
+          Пользователи
         </p>
         <h1 className="text-3xl font-bold">Управление пользователями</h1>
         <p className="max-w-3xl text-muted-foreground">

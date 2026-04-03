@@ -2,6 +2,7 @@ from app.models.ai_chat_message import AIChatMessage
 from app.models.ai_chat_session import AIChatSession
 from app.models.base import Base
 from app.models.course import Course
+from app.models.course_slide import CourseSlide
 from app.models.course_note import CourseNote
 from app.models.enrollment import Enrollment
 from app.models.feedback_ticket import FeedbackTicket
@@ -15,6 +16,7 @@ __all__ = [
     "Session",
     "PasswordReset",
     "Course",
+    "CourseSlide",
     "CourseNote",
     "Enrollment",
     "FeedbackTicket",

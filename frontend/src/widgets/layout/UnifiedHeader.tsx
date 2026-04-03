@@ -71,7 +71,7 @@ export function UnifiedHeader({ sticky = false }: UnifiedHeaderProps): JSX.Eleme
                   <div className="mx-1 h-5 w-px bg-border/70" />
 
                   <NavLink
-                    to="/admin/users"
+                    to="/admin?section=users"
                     className={cn(
                       "inline-flex items-center gap-2 rounded-lg px-2.5 py-1 text-sm font-semibold transition",
                       isAdminPage ? "bg-secondary text-secondary-foreground" : "hover:bg-secondary/70",

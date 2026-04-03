@@ -12,4 +12,5 @@ export const API_ENDPOINTS = {
   aiAsk: "/ai/ask",
   aiHistory: "/ai/history",
   adminUsers: "/admin/users",
+  adminCourses: "/admin/courses",
 } as const;

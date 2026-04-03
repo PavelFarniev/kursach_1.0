@@ -1,6 +1,6 @@
 import { Navigate, BrowserRouter, Route, Routes } from "react-router-dom";
 
-import { AdminUsersPage } from "@/pages/admin/AdminUsersPage";
+import { AdminPage } from "@/pages/admin/AdminPage";
 import { LoginPage } from "@/pages/auth/LoginPage";
 import { RegisterPage } from "@/pages/auth/RegisterPage";
 import { CourseDetailsPage } from "@/pages/courses/CourseDetailsPage";
@@ -36,7 +36,8 @@ export function AppRouter(): JSX.Element {
             <Route path="/courses/:id/learn" element={<CourseLearningPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route element={<AdminRoute />}>
-              <Route path="/admin/users" element={<AdminUsersPage />} />
+              <Route path="/admin" element={<AdminPage />} />
+              <Route path="/admin/users" element={<Navigate to="/admin?section=users" replace />} />
             </Route>
           </Route>
         </Route>

@@ -1,4 +1,6 @@
 import type {
+  AdminCourse,
+  AdminCourseSlide,
   AdminUser,
   ChatMessage,
   CourseNote,
@@ -56,11 +58,25 @@ export interface AdminUsersFilters {
   search?: string;
 }
 
+export interface AdminCoursesFilters {
+  search?: string;
+}
+
 export interface UpdateAdminUserPayload {
   email?: string;
   fullName?: string;
   isActive?: boolean;
   isAdmin?: boolean;
+}
+
+export interface AdminCourseWritePayload {
+  title: string;
+  description: string;
+  category: string;
+  level: string;
+  lessonsCount: number;
+  estimatedHours: number;
+  slides: AdminCourseSlide[];
 }
 
 export interface AIAskPayload {
@@ -112,4 +128,8 @@ export interface AdminApi {
   listUsers(filters?: AdminUsersFilters): Promise<AdminUser[]>;
   updateUser(userId: number, payload: UpdateAdminUserPayload): Promise<AdminUser>;
   deleteUser(userId: number): Promise<void>;
+  listCourses(filters?: AdminCoursesFilters): Promise<AdminCourse[]>;
+  createCourse(payload: AdminCourseWritePayload): Promise<AdminCourse>;
+  updateCourse(courseId: number, payload: AdminCourseWritePayload): Promise<AdminCourse>;
+  deleteCourse(courseId: number): Promise<void>;
 }

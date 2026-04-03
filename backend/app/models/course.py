@@ -18,3 +18,9 @@ class Course(Base, TimestampMixin):
     enrollments = relationship("Enrollment", back_populates="course", cascade="all, delete-orphan")
     notes = relationship("CourseNote", back_populates="course", cascade="all, delete-orphan")
     ai_chat_sessions = relationship("AIChatSession", back_populates="course", cascade="all, delete-orphan")
+    slides = relationship(
+        "CourseSlide",
+        back_populates="course",
+        cascade="all, delete-orphan",
+        order_by="CourseSlide.order_index",
+    )

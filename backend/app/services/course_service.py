@@ -1,5 +1,5 @@
 from sqlalchemy import or_, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.models.course import Course
 from app.schemas.course import CourseDetailResponse, CourseResponse, CourseSlideResponse
@@ -369,11 +369,19 @@ def _fallback_slides(course: Course) -> list[CourseSlideResponse]:
 
 
 def build_course_slides(course: Course) -> list[CourseSlideResponse]:
-    raw_slides = COURSE_SLIDES_BY_TITLE.get(course.title)
-    if raw_slides is None:
-        return _fallback_slides(course)
-
-    return [CourseSlideResponse.model_validate(slide) for slide in raw_slides]
+    ordered_slides = sorted(course.slides, key=lambda slide: slide.order_index)
+    return [
+        CourseSlideResponse(
+            id=str(slide.id),
+            title=slide.title,
+            summary=slide.summary,
+            theory_blocks=list(slide.theory_blocks or []),
+            bullets=list(slide.bullets or []),
+            example=slide.example,
+            practice_task=slide.practice_task,
+        )
+        for slide in ordered_slides
+    ]
 
 
 def serialize_course_detail(course: Course) -> CourseDetailResponse:
@@ -412,4 +420,4 @@ def list_courses(
 
 
 def get_course_by_id(db: Session, course_id: int) -> Course | None:
-    return db.get(Course, course_id)
+    return db.scalar(select(Course).options(selectinload(Course.slides)).where(Course.id == course_id))
