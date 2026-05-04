@@ -62,12 +62,12 @@ export function AIChatWidget({ courseId, courseTitle, compact = false }: AIChatW
     <div className="space-y-4">
       {!isLoading && messages.length === 0 && (
         <div
-          className={cn(
-            "rounded-2xl border p-4",
-            compact
-              ? "border-border/70 bg-muted/20"
-              : "border-primary/25 bg-gradient-to-br from-sky-50 via-cyan-50 to-blue-50 shadow-sm",
-          )}
+            className={cn(
+              "rounded-2xl border p-4",
+              compact
+                ? "border-border/70 bg-muted/20 dark:bg-card/92"
+                : "border-primary/25 bg-gradient-to-br from-sky-50 via-cyan-50 to-blue-50 shadow-sm dark:from-[rgba(35,55,82,0.95)] dark:via-[rgba(29,48,73,0.96)] dark:to-[rgba(25,42,66,0.94)]",
+            )}
         >
           <p className="inline-flex items-center gap-2 text-sm font-semibold text-foreground">
             <Sparkles className="h-4 w-4 text-primary" />
@@ -85,8 +85,8 @@ export function AIChatWidget({ courseId, courseTitle, compact = false }: AIChatW
                 className={cn(
                   "rounded-xl border px-3 py-1.5 text-sm text-foreground transition",
                   compact
-                    ? "border-border/70 bg-background hover:bg-muted"
-                    : "border-primary/20 bg-white/85 hover:bg-primary/10",
+                    ? "border-border/70 bg-background hover:bg-muted dark:bg-card/90 dark:hover:bg-muted/90"
+                    : "border-primary/20 bg-white/85 hover:bg-primary/10 dark:bg-card/90 dark:hover:bg-primary/14",
                 )}
               >
                 <span>{prompt.label}</span>
@@ -97,7 +97,12 @@ export function AIChatWidget({ courseId, courseTitle, compact = false }: AIChatW
         </div>
       )}
 
-      <div className={cn("space-y-3 overflow-y-auto rounded-xl border border-border/60 bg-muted/30 p-3", compact ? "max-h-[240px]" : "max-h-[320px]")}>
+      <div
+        className={cn(
+          "space-y-3 overflow-y-auto rounded-xl border border-border/60 bg-muted/30 p-3 dark:bg-card/82",
+          compact ? "max-h-[240px]" : "max-h-[320px]",
+        )}
+      >
         {isLoading && <p className="text-sm text-muted-foreground">Загружаем историю диалога...</p>}
 
         {messages.map((message) => (
@@ -105,7 +110,7 @@ export function AIChatWidget({ courseId, courseTitle, compact = false }: AIChatW
             key={message.id}
             className={cn(
               "flex items-start gap-2 rounded-lg p-3",
-              message.role === "assistant" ? "bg-secondary/65" : "bg-background",
+              message.role === "assistant" ? "bg-secondary/65 dark:bg-secondary/90" : "bg-background dark:bg-card/90",
             )}
           >
             {message.role === "assistant" ? (
@@ -132,7 +137,7 @@ export function AIChatWidget({ courseId, courseTitle, compact = false }: AIChatW
           onChange={(event) => setText(event.target.value)}
           placeholder={placeholder}
           disabled={isSending}
-          className={compact ? "min-h-[100px] bg-background/70" : undefined}
+          className={compact ? "min-h-[100px] bg-background/70 dark:bg-card/90" : undefined}
         />
         <Button
           onClick={() => void handleSend()}

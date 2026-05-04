@@ -8,6 +8,7 @@ from app.models.enrollment import Enrollment
 from app.models.feedback_ticket import FeedbackTicket
 from app.models.password_reset import PasswordReset
 from app.models.session import Session
+from app.models.user_activity import UserActivity
 from app.models.user import User
 
 __all__ = [
@@ -22,4 +23,5 @@ __all__ = [
     "FeedbackTicket",
     "AIChatSession",
     "AIChatMessage",
+    "UserActivity",
 ]

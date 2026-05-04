@@ -20,3 +20,4 @@ class User(Base, TimestampMixin):
     notes = relationship("CourseNote", back_populates="user", cascade="all, delete-orphan")
     feedback_tickets = relationship("FeedbackTicket", back_populates="user", cascade="all, delete-orphan")
     ai_chat_sessions = relationship("AIChatSession", back_populates="user", cascade="all, delete-orphan")
+    activities = relationship("UserActivity", back_populates="user", cascade="all, delete-orphan")

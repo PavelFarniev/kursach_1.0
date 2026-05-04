@@ -6,7 +6,7 @@ export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>): J
   return (
     <div
       className={cn(
-        "glass-card rounded-xl border border-border/65 !bg-card/48 supports-[backdrop-filter]:!bg-card/24 text-card-foreground shadow-[0_10px_28px_rgba(2,12,27,0.08)] backdrop-blur-2xl backdrop-saturate-[1.9]",
+        "glass-card rounded-xl border border-border/65 !bg-card/48 text-card-foreground shadow-[0_10px_28px_rgba(2,12,27,0.08)] backdrop-blur-2xl backdrop-saturate-[1.9] supports-[backdrop-filter]:!bg-card/24 dark:shadow-[0_18px_48px_rgba(2,6,23,0.42)]",
         className,
       )}
       {...props}

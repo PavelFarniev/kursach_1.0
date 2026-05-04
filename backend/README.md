@@ -6,7 +6,7 @@
 - Python + FastAPI
 - SQLAlchemy ORM
 - Alembic migrations
-- SQLite по умолчанию через `DATABASE_URL=sqlite:///./app.db`
+- PostgreSQL по умолчанию через `DATABASE_URL=postgresql+psycopg://postgres@127.0.0.1:5432/killexam`
 - JWT auth (access + refresh)
 - passlib bcrypt password hashing
 - Pydantic schemas с camelCase JSON
@@ -62,6 +62,7 @@ cd backend
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+createdb killexam
 alembic upgrade head
 uvicorn app.main:app --reload
 ```

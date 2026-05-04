@@ -1,8 +1,9 @@
-import { BookOpenText, GraduationCap, LogOut, ShieldCheck, UserRound } from "lucide-react";
+import { BookOpenText, GraduationCap, LogOut, Moon, ShieldCheck, SunMedium, UserRound } from "lucide-react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 
 import { cn } from "@/shared/lib/utils";
 import { useAuthStore } from "@/store/authStore";
+import { useThemeStore } from "@/store/themeStore";
 
 interface UnifiedHeaderProps {
   sticky?: boolean;
@@ -12,6 +13,8 @@ export function UnifiedHeader({ sticky = false }: UnifiedHeaderProps): JSX.Eleme
   const location = useLocation();
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
+  const theme = useThemeStore((state) => state.theme);
+  const toggleTheme = useThemeStore((state) => state.toggleTheme);
 
   const isProfilePage = location.pathname.startsWith("/profile");
   const isCoursesPage = location.pathname.startsWith("/courses");
@@ -45,6 +48,16 @@ export function UnifiedHeader({ sticky = false }: UnifiedHeaderProps): JSX.Eleme
               </NavLink>
             </div>
           </nav>
+
+          <button
+            type="button"
+            onClick={toggleTheme}
+            aria-label={theme === "dark" ? "Включить светлую тему" : "Включить тёмную тему"}
+            title={theme === "dark" ? "Светлая тема" : "Тёмная тема"}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-border/75 bg-card/88 text-muted-foreground transition hover:border-primary/35 hover:bg-secondary/70 hover:text-foreground"
+          >
+            {theme === "dark" ? <SunMedium className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </button>
 
           {user ? (
             <div className="inline-flex items-center rounded-xl border border-border/75 bg-card/88 p-1">

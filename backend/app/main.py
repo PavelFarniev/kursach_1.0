@@ -11,7 +11,7 @@ from app.core.db import SessionLocal, engine
 from app.services.auth_service import seed_demo_data
 
 logger = logging.getLogger(__name__)
-REQUIRED_SEED_TABLES = {"users", "courses", "enrollments"}
+REQUIRED_SEED_TABLES = {"users", "courses", "enrollments", "user_activities"}
 
 
 def _has_seed_schema() -> bool:

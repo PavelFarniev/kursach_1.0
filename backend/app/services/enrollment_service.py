@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session, selectinload
 from app.models.course import Course
 from app.models.enrollment import Enrollment
 from app.models.user import User
+from app.services.activity_service import COURSE_ENROLL_EVENT, COURSE_PROGRESS_EVENT, track_activity
 
 
 def _resolve_status(progress_percent: int) -> str:
@@ -26,6 +27,8 @@ def create_enrollment(db: Session, *, user: User, course_id: int) -> Enrollment:
 
     enrollment = Enrollment(user_id=user.id, course_id=course_id, progress_percent=0, status="active")
     db.add(enrollment)
+    db.flush()
+    track_activity(db, user_id=user.id, course_id=course_id, event_type=COURSE_ENROLL_EVENT)
     db.commit()
 
     return db.scalar(
@@ -59,8 +62,20 @@ def update_enrollment_progress(
     if enrollment is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Запись о прохождении курса не найдена")
 
-    enrollment.progress_percent = max(0, min(100, progress_percent))
+    next_progress = max(0, min(100, progress_percent))
+    delta = next_progress - enrollment.progress_percent
+    enrollment.progress_percent = next_progress
     enrollment.status = _resolve_status(enrollment.progress_percent)
+
+    if delta > 0:
+        track_activity(
+            db,
+            user_id=user.id,
+            course_id=enrollment.course_id,
+            event_type=COURSE_PROGRESS_EVENT,
+            value=delta,
+        )
+
     db.commit()
     db.refresh(enrollment)
 

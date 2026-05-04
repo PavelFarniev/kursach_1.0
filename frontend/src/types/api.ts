@@ -6,6 +6,7 @@ import type {
   CourseNote,
   Course,
   EnrollmentWithCourse,
+  LearningPulse,
   UserProfile,
 } from "@/types/domain";
 
@@ -122,6 +123,10 @@ export interface NotesApi {
   my(): Promise<CourseNote[]>;
   create(payload: CreateNotePayload): Promise<CourseNote>;
   remove(noteId: number): Promise<void>;
+}
+
+export interface PulseApi {
+  overview(): Promise<LearningPulse>;
 }
 
 export interface AdminApi {

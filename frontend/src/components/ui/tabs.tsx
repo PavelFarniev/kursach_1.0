@@ -10,7 +10,10 @@ export function Tabs({ className, ...props }: ComponentPropsWithoutRef<typeof Ta
 export function TabsList({ className, ...props }: ComponentPropsWithoutRef<typeof TabsPrimitive.List>): JSX.Element {
   return (
     <TabsPrimitive.List
-      className={cn("inline-flex h-10 items-center rounded-lg bg-muted p-1 text-muted-foreground", className)}
+      className={cn(
+        "inline-flex h-10 items-center rounded-lg bg-muted p-1 text-muted-foreground dark:bg-card/90 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.035)]",
+        className,
+      )}
       {...props}
     />
   );
@@ -23,7 +26,7 @@ export function TabsTrigger({
   return (
     <TabsPrimitive.Trigger
       className={cn(
-        "inline-flex items-center justify-center rounded-md px-3 py-1.5 text-sm font-medium transition-all data-[state=active]:bg-background data-[state=active]:text-foreground",
+        "inline-flex items-center justify-center rounded-md px-3 py-1.5 text-sm font-medium transition-all data-[state=active]:bg-background data-[state=active]:text-foreground dark:data-[state=active]:bg-background/80",
         className,
       )}
       {...props}

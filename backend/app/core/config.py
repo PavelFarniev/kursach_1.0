@@ -5,7 +5,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     app_name: str = "KillExam API"
     app_env: str = "dev"
-    database_url: str = "sqlite:///./app.db"
+    database_url: str = "postgresql+psycopg://postgres@127.0.0.1:5432/killexam"
     jwt_secret_key: str = "change-me"
     access_token_expire_minutes: int = 30
     refresh_token_expire_days: int = 7

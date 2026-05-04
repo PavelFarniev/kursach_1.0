@@ -28,6 +28,30 @@
   --warning: 37 95% 45%;
 }
 
+.dark {
+  --background: 208 42% 8%;
+  --foreground: 200 42% 96%;
+
+  --card: 211 33% 16%;
+  --card-foreground: 200 42% 96%;
+
+  --primary: 196 92% 64%;
+  --primary-foreground: 210 44% 10%;
+
+  --secondary: 211 27% 22%;
+  --secondary-foreground: 198 39% 94%;
+
+  --muted: 213 22% 19%;
+  --muted-foreground: 208 18% 69%;
+
+  --border: 214 20% 26%;
+  --input: 214 20% 26%;
+  --ring: 196 92% 64%;
+
+  --success: 156 60% 45%;
+  --warning: 39 92% 58%;
+}
+
 * {
   @apply border-border;
 }
@@ -40,6 +64,18 @@ body {
     radial-gradient(circle at 100% 0%, rgba(14, 165, 233, 0.08), transparent 24%),
     linear-gradient(180deg, rgba(248, 252, 255, 1), rgba(240, 249, 255, 0.72));
   min-height: 100vh;
+  transition:
+    background-color 220ms ease,
+    color 220ms ease,
+    background-image 220ms ease;
+}
+
+.dark body {
+  background-image:
+    radial-gradient(circle at 10% 0%, rgba(56, 189, 248, 0.14), transparent 28%),
+    radial-gradient(circle at 100% 10%, rgba(14, 165, 233, 0.12), transparent 26%),
+    radial-gradient(circle at 50% 100%, rgba(236, 72, 153, 0.08), transparent 24%),
+    linear-gradient(180deg, rgba(10, 17, 31, 1), rgba(13, 25, 40, 0.96));
 }
 
 h1,
@@ -71,6 +107,14 @@ h6 {
     linear-gradient(160deg, rgba(255, 255, 255, 0.44), rgba(255, 255, 255, 0.14));
   opacity: 0.62;
   z-index: 0;
+}
+
+.dark .glass-card::before {
+  background:
+    radial-gradient(circle at 18% -12%, rgba(56, 189, 248, 0.24), transparent 42%),
+    radial-gradient(circle at 86% 118%, rgba(244, 63, 94, 0.18), transparent 46%),
+    linear-gradient(160deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04));
+  opacity: 0.82;
 }
 
 .glass-card > * {
@@ -113,6 +157,10 @@ h6 {
   width: 34rem;
   height: 34rem;
   background: radial-gradient(circle, rgba(56, 189, 248, 0.24), transparent 70%);
+}
+
+.dark .geo-mist {
+  opacity: 0.3;
 }
 
 .geo-mist--two {
@@ -225,4 +273,11 @@ h6 {
     linear-gradient(120deg, rgba(255, 255, 255, 0.9), rgba(240, 249, 255, 0.9), rgba(255, 255, 255, 0.85));
   background-size: 180% 180%;
   animation: pulse-surface-shift 14s ease infinite;
+}
+
+.dark .pulse-surface {
+  background-image:
+    radial-gradient(circle at 20% 0%, rgba(56, 189, 248, 0.13), transparent 35%),
+    radial-gradient(circle at 100% 100%, rgba(14, 165, 233, 0.11), transparent 32%),
+    linear-gradient(120deg, rgba(18, 28, 46, 0.92), rgba(22, 38, 59, 0.94), rgba(17, 26, 42, 0.9));
 }

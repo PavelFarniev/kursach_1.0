@@ -10,7 +10,7 @@ interface ProgressProps extends ComponentPropsWithoutRef<typeof ProgressPrimitiv
 export function Progress({ className, value, ...props }: ProgressProps): JSX.Element {
   return (
     <ProgressPrimitive.Root
-      className={cn("relative h-2 w-full overflow-hidden rounded-full bg-muted", className)}
+      className={cn("relative h-2 w-full overflow-hidden rounded-full bg-muted dark:bg-muted/90", className)}
       value={value}
       {...props}
     >

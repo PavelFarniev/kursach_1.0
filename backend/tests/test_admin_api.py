@@ -1,17 +1,13 @@
 from __future__ import annotations
 
-import tempfile
 import unittest
-from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine, func, select
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy import func, select
 
 from app.api.v1.router import api_router
 from app.core.db import get_db
-from app.models import Base
 from app.models.ai_chat_message import AIChatMessage
 from app.models.ai_chat_session import AIChatSession
 from app.models.course import Course
@@ -20,18 +16,14 @@ from app.models.course_slide import CourseSlide
 from app.models.enrollment import Enrollment
 from app.models.user import User
 from app.services.auth_service import DEMO_EMAIL, DEMO_PASSWORD, seed_demo_data
+from tests.postgres_test_harness import PostgresTestDatabase
 
 
 class AdminApiSmokeTests(unittest.TestCase):
     def setUp(self) -> None:
-        self.temp_dir = tempfile.TemporaryDirectory()
-        self.database_path = Path(self.temp_dir.name) / "test_admin_api.db"
-        self.engine = create_engine(
-            f"sqlite:///{self.database_path}",
-            connect_args={"check_same_thread": False},
-        )
-        self.SessionLocal = sessionmaker(bind=self.engine, autoflush=False, autocommit=False, expire_on_commit=False)
-        Base.metadata.create_all(self.engine)
+        self.test_db = PostgresTestDatabase()
+        self.engine = self.test_db.engine
+        self.SessionLocal = self.test_db.SessionLocal
         self._seed_initial_data()
 
         self.app = FastAPI()
@@ -49,8 +41,7 @@ class AdminApiSmokeTests(unittest.TestCase):
 
     def tearDown(self) -> None:
         self.client.close()
-        self.engine.dispose()
-        self.temp_dir.cleanup()
+        self.test_db.dispose()
 
     def _seed_initial_data(self) -> None:
         starter_courses = [

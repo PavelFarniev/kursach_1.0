@@ -41,8 +41,8 @@ const config: Config = {
       },
       keyframes: {
         "fade-in-up": {
-          from: { opacity: "0", transform: "translateY(12px)" },
-          to: { opacity: "1", transform: "translateY(0)" },
+          from: { transform: "translateY(12px)" },
+          to: { transform: "translateY(0)" },
         },
       },
       animation: {

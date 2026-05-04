@@ -4,6 +4,7 @@ export const API_ENDPOINTS = {
   authRefresh: "/auth/refresh",
   authChangePassword: "/auth/change-password",
   profile: "/user/profile",
+  userPulse: "/user/pulse",
   courses: "/courses",
   enrollments: "/enrollments",
   myEnrollments: "/enrollments/my",

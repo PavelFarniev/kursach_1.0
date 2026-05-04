@@ -89,3 +89,20 @@ export interface ChatMessage {
   content: string;
   createdAt: string;
 }
+
+export interface PulseSnapshot {
+  label: string;
+  readiness: number;
+  activityCount: number;
+  siteVisits: number;
+  streakDays: number;
+  weakestTopic: string;
+  chart: number[];
+  plan: string[];
+}
+
+export interface LearningPulse {
+  today: PulseSnapshot;
+  week: PulseSnapshot;
+  sprint: PulseSnapshot;
+}

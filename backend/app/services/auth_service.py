@@ -18,9 +18,11 @@ from app.models.course import Course
 from app.models.enrollment import Enrollment
 from app.models.password_reset import PasswordReset
 from app.models.session import Session as UserSession
+from app.models.user_activity import UserActivity
 from app.models.user import User
 from app.schemas.auth import PasswordResetRequestResponse, TokenPairResponse
 from app.schemas.user import UserProfileResponse
+from app.services.activity_service import COURSE_ENROLL_EVENT, COURSE_PROGRESS_EVENT, SITE_VISIT_EVENT, track_activity
 
 DEMO_EMAIL = "demo@student.ai"
 DEMO_PASSWORD = "demo123"
@@ -109,7 +111,10 @@ def register_user(
     db.add(user)
     db.flush()
 
-    return create_session_tokens(db, user, user_agent=user_agent, ip_address=ip_address)
+    tokens = create_session_tokens(db, user, user_agent=user_agent, ip_address=ip_address)
+    track_activity(db, user_id=user.id, event_type=SITE_VISIT_EVENT)
+    db.commit()
+    return tokens
 
 
 def authenticate_user(
@@ -129,7 +134,10 @@ def authenticate_user(
     if not user.is_active:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Аккаунт деактивирован")
 
-    return create_session_tokens(db, user, user_agent=user_agent, ip_address=ip_address)
+    tokens = create_session_tokens(db, user, user_agent=user_agent, ip_address=ip_address)
+    track_activity(db, user_id=user.id, event_type=SITE_VISIT_EVENT)
+    db.commit()
+    return tokens
 
 
 def refresh_tokens(
@@ -300,5 +308,60 @@ def seed_demo_data(db: Session) -> None:
                     status="completed",
                 )
             )
+
+    existing_demo_activities = db.scalar(
+        select(func.count()).select_from(UserActivity).where(UserActivity.user_id == demo_user.id)
+    )
+    if not existing_demo_activities and len(courses) >= 4:
+        now = datetime.now(timezone.utc)
+        demo_activity_rows = [
+            UserActivity(
+                user_id=demo_user.id,
+                event_type=SITE_VISIT_EVENT,
+                value=1,
+                created_at=now - timedelta(days=7),
+                updated_at=now - timedelta(days=7),
+            ),
+            UserActivity(
+                user_id=demo_user.id,
+                course_id=courses[1].id,
+                event_type=COURSE_ENROLL_EVENT,
+                value=1,
+                created_at=now - timedelta(days=7),
+                updated_at=now - timedelta(days=7),
+            ),
+            UserActivity(
+                user_id=demo_user.id,
+                course_id=courses[1].id,
+                event_type=COURSE_PROGRESS_EVENT,
+                value=20,
+                created_at=now - timedelta(days=5),
+                updated_at=now - timedelta(days=5),
+            ),
+            UserActivity(
+                user_id=demo_user.id,
+                event_type=SITE_VISIT_EVENT,
+                value=1,
+                created_at=now - timedelta(days=2),
+                updated_at=now - timedelta(days=2),
+            ),
+            UserActivity(
+                user_id=demo_user.id,
+                course_id=courses[3].id,
+                event_type=COURSE_ENROLL_EVENT,
+                value=1,
+                created_at=now - timedelta(days=2),
+                updated_at=now - timedelta(days=2),
+            ),
+            UserActivity(
+                user_id=demo_user.id,
+                course_id=courses[3].id,
+                event_type=COURSE_PROGRESS_EVENT,
+                value=55,
+                created_at=now - timedelta(days=1),
+                updated_at=now - timedelta(days=1),
+            ),
+        ]
+        db.add_all(demo_activity_rows)
 
     db.commit()

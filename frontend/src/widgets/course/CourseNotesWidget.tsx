@@ -44,7 +44,7 @@ export function CourseNotesWidget({ courseId, compact = false }: CourseNotesWidg
         value={draft}
         onChange={(event) => setDraft(event.target.value)}
         placeholder="Например: повторить параметры и спросить AI про типичные ошибки..."
-        className={compact ? "min-h-[96px] bg-background/70" : "min-h-[110px] bg-background/66"}
+        className={compact ? "min-h-[96px] bg-background/70 dark:bg-card/90" : "min-h-[110px] bg-background/66 dark:bg-card/90"}
       />
 
       <div className="flex items-center justify-between gap-2">
@@ -66,7 +66,7 @@ export function CourseNotesWidget({ courseId, compact = false }: CourseNotesWidg
           {savedNotes.map((note) => (
             <div
               key={note.id}
-              className="flex items-start justify-between gap-3 rounded-lg bg-muted/40 px-3 py-2"
+              className="flex items-start justify-between gap-3 rounded-lg bg-muted/40 px-3 py-2 dark:bg-card/82"
             >
               <p className="flex items-start gap-2 text-sm text-foreground">
                 <BookText className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
@@ -76,7 +76,7 @@ export function CourseNotesWidget({ courseId, compact = false }: CourseNotesWidg
                 type="button"
                 aria-label="Удалить заметку"
                 onClick={() => void removeNoteForCourse(courseId, note.id)}
-                className="rounded-md p-1 text-muted-foreground transition hover:bg-background hover:text-foreground"
+                className="rounded-md p-1 text-muted-foreground transition hover:bg-background hover:text-foreground dark:hover:bg-card"
               >
                 <Trash2 className="h-4 w-4" />
               </button>

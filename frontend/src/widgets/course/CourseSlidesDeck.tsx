@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Course } from "@/types/domain";
+import { ModuleQuizCard, parseModuleQuiz } from "@/widgets/course/ModuleQuizCard";
 
 interface CourseSlidesDeckProps {
   course: Course;
@@ -15,6 +16,7 @@ export function CourseSlidesDeck({ course, currentIndex, onSlideChange }: Course
   const slides = course.slides ?? [];
   const safeCurrentIndex = Math.min(Math.max(0, currentIndex), Math.max(0, slides.length - 1));
   const currentSlide = useMemo(() => slides[safeCurrentIndex] ?? null, [safeCurrentIndex, slides]);
+  const moduleQuiz = useMemo(() => (currentSlide ? parseModuleQuiz(currentSlide.practiceTask) : null), [currentSlide]);
   const isFirstSlide = safeCurrentIndex === 0;
   const isLastSlide = safeCurrentIndex === slides.length - 1;
 
@@ -52,20 +54,24 @@ export function CourseSlidesDeck({ course, currentIndex, onSlideChange }: Course
       </div>
 
       <Card className="overflow-hidden border-border/70 bg-card shadow-sm">
-        <CardHeader className="space-y-6 border-b border-border/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.9))] px-6 pb-6 pt-6 md:px-10 md:pb-8 md:pt-8">
+        <CardHeader className="space-y-6 border-b border-border/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.9))] px-6 pb-6 pt-6 dark:bg-[linear-gradient(180deg,rgba(29,43,61,0.98),rgba(34,50,69,0.94))] md:px-10 md:pb-8 md:pt-8">
           <div className="flex items-start justify-between gap-6">
             <div className="space-y-4">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">{course.category}</p>
               <div className="space-y-3">
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary/70">
+                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary/70 dark:text-primary/85">
                   Слайд {String(safeCurrentIndex + 1).padStart(2, "0")}
                 </p>
-                <CardTitle className="max-w-3xl text-3xl leading-tight md:text-5xl">{currentSlide.title}</CardTitle>
-                <CardDescription className="max-w-3xl text-lg leading-8 text-foreground/80">{currentSlide.summary}</CardDescription>
+                <CardTitle className="max-w-3xl text-3xl leading-tight text-foreground dark:text-foreground md:text-5xl">
+                  {currentSlide.title}
+                </CardTitle>
+                <CardDescription className="max-w-3xl text-lg leading-8 text-foreground/80 dark:text-foreground/84">
+                  {currentSlide.summary}
+                </CardDescription>
               </div>
             </div>
 
-            <div className="hidden shrink-0 text-6xl font-bold tracking-tight text-primary/10 md:block">
+            <div className="hidden shrink-0 text-6xl font-bold tracking-tight text-primary/10 dark:text-primary/15 md:block">
               {String(safeCurrentIndex + 1).padStart(2, "0")}
             </div>
           </div>
@@ -97,10 +103,14 @@ export function CourseSlidesDeck({ course, currentIndex, onSlideChange }: Course
             <p className="text-base leading-7 text-muted-foreground">{currentSlide.example}</p>
           </div>
 
-          <div className="space-y-4 rounded-2xl border border-primary/20 bg-primary/10 px-6 py-5">
-            <p className="text-sm font-semibold text-foreground">Вопрос для самопроверки</p>
-            <p className="text-base leading-7 text-muted-foreground">{currentSlide.practiceTask}</p>
-          </div>
+          {moduleQuiz ? (
+            <ModuleQuizCard key={currentSlide.id} quiz={moduleQuiz} />
+          ) : (
+            <div className="space-y-4 rounded-2xl border border-primary/20 bg-primary/10 px-6 py-5">
+              <p className="text-sm font-semibold text-foreground">Вопрос для самопроверки</p>
+              <p className="text-base leading-7 text-muted-foreground">{currentSlide.practiceTask}</p>
+            </div>
+          )}
         </CardContent>
       </Card>
 

@@ -42,7 +42,7 @@ export function CourseSupportDropdown({ courseId, courseTitle }: CourseSupportDr
           activePanel ? "w-[332px] 2xl:w-[352px]" : "w-[308px] 2xl:w-[328px]",
         )}
       >
-        <div className="overflow-hidden rounded-[22px] border border-border/80 bg-card/92 shadow-[0_18px_40px_rgba(15,23,42,0.10)] backdrop-blur">
+        <div className="overflow-hidden rounded-[22px] border border-border/80 bg-card/92 shadow-[0_18px_40px_rgba(15,23,42,0.10)] backdrop-blur dark:border-border dark:bg-card/96 dark:shadow-[0_24px_56px_rgba(2,8,24,0.46)]">
           <div className="flex items-center justify-between gap-3 border-b border-border/60 px-5 py-3">
             <div>
               <p className="text-sm font-semibold text-foreground">{panelTitle}</p>
@@ -62,7 +62,9 @@ export function CourseSupportDropdown({ courseId, courseTitle }: CourseSupportDr
               onClick={() => togglePanel("ai")}
               className={cn(
                 "inline-flex flex-1 items-center justify-between rounded-xl border px-4 py-2.5 text-sm font-medium transition",
-                activePanel === "ai" ? "border-primary/35 bg-primary/10 text-foreground" : "border-border/70 bg-background/70 text-muted-foreground hover:bg-muted",
+                activePanel === "ai"
+                  ? "border-primary/35 bg-primary/10 text-foreground dark:bg-primary/14"
+                  : "border-border/70 bg-background/70 text-muted-foreground hover:bg-muted dark:bg-card/90 dark:hover:bg-muted/90",
               )}
             >
               <span className="inline-flex items-center gap-2">
@@ -77,7 +79,9 @@ export function CourseSupportDropdown({ courseId, courseTitle }: CourseSupportDr
               onClick={() => togglePanel("notes")}
               className={cn(
                 "inline-flex flex-1 items-center justify-between rounded-xl border px-4 py-2.5 text-sm font-medium transition",
-                activePanel === "notes" ? "border-primary/35 bg-primary/10 text-foreground" : "border-border/70 bg-background/70 text-muted-foreground hover:bg-muted",
+                activePanel === "notes"
+                  ? "border-primary/35 bg-primary/10 text-foreground dark:bg-primary/14"
+                  : "border-border/70 bg-background/70 text-muted-foreground hover:bg-muted dark:bg-card/90 dark:hover:bg-muted/90",
               )}
             >
               <span className="inline-flex items-center gap-2">
@@ -104,16 +108,16 @@ export function CourseSupportDropdown({ courseId, courseTitle }: CourseSupportDr
       </div>
 
       <div className="space-y-3 lg:hidden">
-        <div className="rounded-2xl border border-border/70 bg-card/75 p-4">
+        <div className="rounded-2xl border border-border/70 bg-card/75 p-4 dark:bg-card/92">
           <p className="text-sm font-semibold text-foreground">Помощь по курсу</p>
           <p className="mt-1 text-sm text-muted-foreground">AI и заметки доступны в раскрывающемся блоке, чтобы не перегружать экран.</p>
         </div>
 
-        <div className="space-y-3 rounded-2xl border border-border/70 bg-card/75 p-4">
+        <div className="space-y-3 rounded-2xl border border-border/70 bg-card/75 p-4 dark:bg-card/92">
           <button
             type="button"
             onClick={() => togglePanel("ai")}
-            className="flex w-full items-center justify-between rounded-xl border border-border/70 bg-background/70 px-4 py-3 text-left"
+            className="flex w-full items-center justify-between rounded-xl border border-border/70 bg-background/70 px-4 py-3 text-left dark:bg-card/90"
           >
             <span className="inline-flex items-center gap-2 text-sm font-medium text-foreground">
               <Bot className="h-4 w-4 text-primary" />
@@ -127,7 +131,7 @@ export function CourseSupportDropdown({ courseId, courseTitle }: CourseSupportDr
           <button
             type="button"
             onClick={() => togglePanel("notes")}
-            className="flex w-full items-center justify-between rounded-xl border border-border/70 bg-background/70 px-4 py-3 text-left"
+            className="flex w-full items-center justify-between rounded-xl border border-border/70 bg-background/70 px-4 py-3 text-left dark:bg-card/90"
           >
             <span className="inline-flex items-center gap-2 text-sm font-medium text-foreground">
               <NotebookPen className="h-4 w-4 text-primary" />
