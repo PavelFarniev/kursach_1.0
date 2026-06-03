@@ -1,62 +1,39 @@
-# Backend (FastAPI) - AI Exam Prep Platform
+# Backend
 
-Рабочий backend V1 для auth, каталога курсов, enrollments, заметок и базовых AI/feedback endpoints.
-
-## Stack
-- Python + FastAPI
+## Стек
+- Python
+- FastAPI
 - SQLAlchemy ORM
-- Alembic migrations
-- PostgreSQL по умолчанию через `DATABASE_URL=postgresql+psycopg://postgres@127.0.0.1:5432/killexam`
-- JWT auth (access + refresh)
-- passlib bcrypt password hashing
-- Pydantic schemas с camelCase JSON
+- Alembic
+- PostgreSQL
+- Pydantic
+- bcrypt / JWT
+- GigaChat SDK
 
-## Реализованные сущности
-- User
-- Session
-- PasswordReset
-- Course
-- Enrollment
-- CourseNote
-- FeedbackTicket
-- AIChatSession
-- AIChatMessage
+## Реализованные блоки
+- auth, register, refresh, logout, change password, password reset;
+- профиль пользователя и Learning Pulse;
+- каталог курсов и экран обучения;
+- заметки, enrollments и AI-чат;
+- admin API для пользователей и курсов;
+- файловый аудит действий и измерение времени ответа.
 
-## Основные API endpoints
-### Auth
-- `POST /api/v1/auth/register`
-- `POST /api/v1/auth/login`
-- `POST /api/v1/auth/refresh`
-- `POST /api/v1/auth/change-password`
-- `POST /api/v1/auth/password-reset/request`
-- `POST /api/v1/auth/password-reset/confirm`
+## Аутентификация
+- access и refresh токены выдаются backend;
+- backend выставляет `HttpOnly` cookie для серверной сессии;
+- logout отзывает текущую refresh-сессию и очищает cookie;
+- при 401 frontend пробует обновить сессию через refresh endpoint.
 
-### User
-- `GET /api/v1/user/profile`
+## Аудит
+- файл аудита по умолчанию: `backend/runtime_logs/audit.log`;
+- логируются авторизация, logout, admin-действия, AI-запросы, заметки и изменения прогресса.
 
-### Courses
-- `GET /api/v1/courses`
-- `GET /api/v1/courses/{course_id}`
+## База данных
+- миграции лежат в `backend/alembic/versions`;
+- добавлены `CHECK`-ограничения и trigger-ы на обновление `updated_at`;
+- backup/restore скрипты лежат в `backend/scripts`.
 
-### Enrollments
-- `POST /api/v1/enrollments`
-- `GET /api/v1/enrollments/my`
-- `PATCH /api/v1/enrollments/{enrollment_id}/progress`
-
-### Notes
-- `GET /api/v1/notes/my`
-- `POST /api/v1/notes`
-- `DELETE /api/v1/notes/{note_id}`
-
-## Folder overview
-- `app/api` - routers and endpoint modules
-- `app/models` - SQLAlchemy models
-- `app/schemas` - request/response Pydantic models
-- `app/services` - domain services
-- `app/core` - settings, DB, security
-- `alembic` - migration environment and versions
-
-## Local run
+## Локальный запуск
 ```bash
 cd backend
 python -m venv .venv
@@ -67,8 +44,13 @@ alembic upgrade head
 uvicorn app.main:app --reload
 ```
 
-Приложение больше не создаёт таблицы через `Base.metadata.create_all()`. Если схема не применена, startup пропустит сидирование и выведет предупреждение.
+## Тесты
+```bash
+cd backend
+./.venv/bin/python -m unittest discover -s tests
+```
 
-## Seed data
-- При старте backend сидирует каталог курсов, если таблицы уже созданы миграциями.
-- Также создаётся demo-пользователь `demo@student.ai / demo123`, если его ещё нет.
+## Настройки
+- локальный шаблон окружения: [backend/.env.example](/Users/artemfarniev2013/WebstormProjects/kursach_1.0/backend/.env.example)
+- backup: [backup_postgres.sh](/Users/artemfarniev2013/WebstormProjects/kursach_1.0/backend/scripts/backup_postgres.sh)
+- restore: [restore_postgres.sh](/Users/artemfarniev2013/WebstormProjects/kursach_1.0/backend/scripts/restore_postgres.sh)

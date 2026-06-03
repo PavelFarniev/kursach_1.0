@@ -100,7 +100,7 @@ export function UnifiedHeader({ sticky = false }: UnifiedHeaderProps): JSX.Eleme
 
               <button
                 type="button"
-                onClick={logout}
+                onClick={() => void logout()}
                 className="inline-flex items-center gap-2 rounded-lg px-2.5 py-1 text-sm font-semibold text-foreground transition hover:bg-secondary/70"
               >
                 <LogOut className="h-4 w-4" />

@@ -7,6 +7,7 @@ export interface UserProfile {
   email: string;
   fullName: string;
   isAdmin: boolean;
+  hasGigachatCredentials: boolean;
 }
 
 export interface AdminUser {

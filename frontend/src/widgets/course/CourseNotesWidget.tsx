@@ -3,6 +3,7 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useCourseNotesStore } from "@/store/courseNotesStore";
 import type { CourseNote } from "@/types/domain";
@@ -21,6 +22,7 @@ export function CourseNotesWidget({ courseId, compact = false }: CourseNotesWidg
   const addNoteForCourse = useCourseNotesStore((state) => state.addNoteForCourse);
   const removeNoteForCourse = useCourseNotesStore((state) => state.removeNoteForCourse);
   const notesError = useCourseNotesStore((state) => state.error);
+  const textareaId = `course-note-draft-${courseId}`;
 
   const handleSaveNote = async (): Promise<void> => {
     const trimmed = draft.trim();
@@ -40,12 +42,16 @@ export function CourseNotesWidget({ courseId, compact = false }: CourseNotesWidg
 
   const content = (
     <div className="space-y-3">
-      <Textarea
-        value={draft}
-        onChange={(event) => setDraft(event.target.value)}
-        placeholder="Например: повторить параметры и спросить AI про типичные ошибки..."
-        className={compact ? "min-h-[96px] bg-background/70 dark:bg-card/90" : "min-h-[110px] bg-background/66 dark:bg-card/90"}
-      />
+      <div className="space-y-2">
+        <Label htmlFor={textareaId}>Текст заметки</Label>
+        <Textarea
+          id={textareaId}
+          value={draft}
+          onChange={(event) => setDraft(event.target.value)}
+          placeholder="Например: повторить параметры и спросить AI про типичные ошибки..."
+          className={compact ? "min-h-[96px] bg-background/70 dark:bg-card/90" : "min-h-[110px] bg-background/66 dark:bg-card/90"}
+        />
+      </div>
 
       <div className="flex items-center justify-between gap-2">
         <p className="text-xs text-muted-foreground">Нажмите сохранить, чтобы добавить заметку в список</p>
@@ -59,7 +65,7 @@ export function CourseNotesWidget({ courseId, compact = false }: CourseNotesWidg
         </Button>
       </div>
 
-      {notesError ? <p className="text-sm text-warning">{notesError}</p> : null}
+      {notesError ? <p className="text-sm text-warning" role="alert">{notesError}</p> : null}
 
       {savedNotes.length > 0 ? (
         <div className="space-y-2 pt-1">

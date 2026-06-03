@@ -132,7 +132,7 @@ export function AuthForm({ mode }: AuthFormProps): JSX.Element {
         <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form noValidate onSubmit={handleSubmit} className="space-y-4">
           {mode === "register" && (
             <div className="space-y-2">
               <Label htmlFor="fullName">Имя и фамилия</Label>

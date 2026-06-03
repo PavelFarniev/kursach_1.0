@@ -1,31 +1,58 @@
-3# Подготовка к экзаменам с AI
+# KillExam
 
-Стартовая версия проекта с разделением на:
-- `backend` — архитектурный FastAPI-скелет под дальнейшую реализацию
-- `frontend` — реализованное ядро MVP (React + TypeScript + Vite)
+Полноценная учебная платформа для подготовки к экзаменам с каталогом курсов, прогрессом, заметками, AI-ассистентом и административной панелью.
 
-## Что сделано в этом этапе
-Реализована только основная часть MVP:
-1. Вход / регистрация
-2. Каталог курсов
-3. Страница курса
-4. Прогресс по курсу
-5. AI-чат внутри курса
-6. Профиль пользователя с его курсами
+## Что реализовано
+- авторизация, регистрация, смена пароля и серверные сессии;
+- каталог курсов, карточка курса и экран обучения;
+- заметки пользователя и AI-чат внутри курса;
+- профиль и Learning Pulse;
+- административное управление пользователями и курсами;
+- backend-аудит в файл, backup/restore скрипты и миграции БД;
+- frontend и backend автотесты.
 
-## Структура
-- `backend/` — FastAPI/SQLAlchemy/Alembic/JWT-ready каркас с ERD-моделями и endpoint-заглушками
-- `frontend/` — рабочее приложение с роутингом, состоянием и mock API
+## Архитектура
+- `frontend/`: React + TypeScript + Vite + Zustand + Axios.
+- `backend/`: FastAPI + SQLAlchemy + Alembic + PostgreSQL + GigaChat.
+- `docs/`: инструкция по эксплуатации, БД, тестирование и заметки по соответствию требованиям.
 
-## Быстрый старт фронтенда
+## Быстрый старт
+### Frontend
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-## Почему backend пока скелет
-По задаче текущего этапа реализуется только frontend-ядро продукта. Backend подготовлен архитектурно (модели, схемы, сервисы, endpoints) и согласован с:
-- Use Case roles: Гость / Пользователь / Администратор
-- User Story Map основного потока
-- ERD сущностями: User, Session, PasswordReset, Course, Enrollment, FeedbackTicket, AIChatSession, AIChatMessage
+### Backend
+```bash
+cd backend
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+createdb killexam
+alembic upgrade head
+uvicorn app.main:app --reload
+```
+
+## Документация
+- [Инструкция по эксплуатации](/Users/artemfarniev2013/WebstormProjects/kursach_1.0/docs/user-manual.md)
+- [База данных и backup/restore](/Users/artemfarniev2013/WebstormProjects/kursach_1.0/docs/database-operations.md)
+- [Тестирование](/Users/artemfarniev2013/WebstormProjects/kursach_1.0/docs/testing.md)
+- [Соответствие требованиям и ГОСТам](/Users/artemfarniev2013/WebstormProjects/kursach_1.0/docs/gost-compliance.md)
+
+## Проверка качества
+```bash
+cd frontend && npm run test:run && npm run build
+cd backend && ./.venv/bin/python -m unittest discover -s tests
+```
+
+## Безопасность
+- пользовательские сессии backend поддерживает через `HttpOnly` cookie;
+- refresh-сессии можно отзывать через logout;
+- аудит действий пишется в `backend/runtime_logs/audit.log`;
+- локальный шаблон настроек лежит в [backend/.env.example](/Users/artemfarniev2013/WebstormProjects/kursach_1.0/backend/.env.example).
+
+## Важно
+- Для production нужно задать собственный `JWT_SECRET_KEY`.
+- Если среда подменяет сертификаты GigaChat, настройте `GIGACHAT_CA_BUNDLE_FILE` и включите `GIGACHAT_VERIFY_SSL_CERTS=true`.

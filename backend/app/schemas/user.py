@@ -1,7 +1,8 @@
 from datetime import datetime
 
-from pydantic import EmailStr, Field
+from pydantic import EmailStr, Field, field_validator
 
+from app.core.gigachat_credentials import validate_gigachat_credentials
 from app.schemas.base import CamelModel
 
 
@@ -10,6 +11,23 @@ class UserProfileResponse(CamelModel):
     email: EmailStr
     full_name: str
     is_admin: bool
+    has_gigachat_credentials: bool = False
+
+
+class GigaChatCredentialsUpdateRequest(CamelModel):
+    credentials: str = Field(min_length=20, max_length=4000)
+
+    @field_validator("credentials", mode="before")
+    @classmethod
+    def normalize_credentials(cls, value: object) -> object:
+        if not isinstance(value, str):
+            return value
+
+        return validate_gigachat_credentials(value)
+
+
+class GigaChatCredentialsStatusResponse(CamelModel):
+    has_credentials: bool
 
 
 class AdminUserResponse(CamelModel):

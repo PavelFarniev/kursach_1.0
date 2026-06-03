@@ -1,7 +1,10 @@
+from AIagent.gigachat_agent import AgentMessage, GigaChatRequestError, ask_course_agent
 from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
+from app.core.crypto import decrypt_secret
+from app.core.gigachat_credentials import InvalidGigaChatCredentialsError
 from app.models.ai_chat_message import AIChatMessage
 from app.models.ai_chat_session import AIChatSession
 from app.models.course import Course
@@ -9,50 +12,103 @@ from app.models.user import User
 from app.schemas.ai import AIHistoryResponse, AIMessageResponse
 
 
-def _generate_answer(course_title: str, question: str) -> str:
-    normalized = question.lower()
-
-    if "план" in normalized or "распис" in normalized:
-        return (
-            f"Для курса «{course_title}» советую такой мини-план: 1) 25 минут теории, "
-            "2) 5-7 задач на закрепление, 3) короткий разбор ошибок и повтор через день."
-        )
-
-    if "ошиб" in normalized or "не понимаю" in normalized:
-        return (
-            "Разберем тему по шагам: сначала правило, затем короткий пример, потом типичная ошибка "
-            "и способ ее избежать. Если хочешь, пришли конкретное задание."
-        )
-
-    if "шпаргал" in normalized or "кратко" in normalized:
-        return "Укажи тему точнее, и я соберу короткую шпаргалку: правило, формула, ловушки и мини-пример."
-
-    return "Хороший запрос. Начни с ключевого правила темы, затем реши 2 базовые задачи и 1 задачу на перенос навыка."
-
-
-def _get_or_create_chat_session(db: Session, *, user_id: int, course_id: int) -> AIChatSession:
+def _get_or_create_chat_session(
+    db: Session, *, user_id: int, course_id: int
+) -> AIChatSession:
     session = db.scalar(
-        select(AIChatSession).where(AIChatSession.user_id == user_id, AIChatSession.course_id == course_id)
+        select(AIChatSession).where(
+            AIChatSession.user_id == user_id, AIChatSession.course_id == course_id
+        )
     )
     if session is not None:
         return session
 
-    session = AIChatSession(user_id=user_id, course_id=course_id, title="Course Assistant")
+    session = AIChatSession(
+        user_id=user_id, course_id=course_id, title="Course Assistant"
+    )
     db.add(session)
     db.flush()
     return session
 
 
+def _build_course_description(course: Course) -> str:
+    slide_lines: list[str] = []
+
+    for slide in course.slides:
+        slide_lines.append(
+            "\n".join(
+                [
+                    f"Тема: {slide.title}",
+                    f"Кратко: {slide.summary}",
+                    f"Теория: {'; '.join(slide.theory_blocks or [])}",
+                    f"Ключевые пункты: {'; '.join(slide.bullets or [])}",
+                    f"Пример: {slide.example}",
+                    f"Практика: {slide.practice_task}",
+                ]
+            )
+        )
+
+    slides_context = (
+        "\n\n".join(slide_lines) if slide_lines else "Материалы слайдов не добавлены."
+    )
+    return f"{course.description}\n\nМатериалы курса:\n{slides_context}"
+
+
 def ask_ai(db: Session, *, user: User, course_id: int, message: str) -> tuple[int, str]:
-    course = db.get(Course, course_id)
+    user_gigachat_credentials = decrypt_secret(user.gigachat_credentials_encrypted)
+    if not user_gigachat_credentials:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Добавьте личный GigaChat Authorization Key в настройках AI-чата",
+        )
+
+    course = db.scalar(
+        select(Course)
+        .where(Course.id == course_id)
+        .options(selectinload(Course.slides))
+    )
     if course is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Курс не найден")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Курс не найден"
+        )
 
     chat_session = _get_or_create_chat_session(db, user_id=user.id, course_id=course_id)
-    answer = _generate_answer(course.title, message)
+    history = [
+        AgentMessage(role=item.role, content=item.content)
+        for item in db.scalars(
+            select(AIChatMessage)
+            .where(AIChatMessage.chat_session_id == chat_session.id)
+            .order_by(AIChatMessage.created_at)
+        ).all()
+    ]
+    try:
+        answer = ask_course_agent(
+            course_title=course.title,
+            course_category=course.category,
+            course_description=_build_course_description(course),
+            user_message=message,
+            history=history,
+            gigachat_credentials=user_gigachat_credentials,
+        )
+    except InvalidGigaChatCredentialsError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
+    except GigaChatRequestError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=str(exc),
+        ) from exc
 
-    db.add(AIChatMessage(chat_session_id=chat_session.id, role="user", content=message.strip()))
-    db.add(AIChatMessage(chat_session_id=chat_session.id, role="assistant", content=answer))
+    db.add(
+        AIChatMessage(
+            chat_session_id=chat_session.id, role="user", content=message.strip()
+        )
+    )
+    db.add(
+        AIChatMessage(chat_session_id=chat_session.id, role="assistant", content=answer)
+    )
     db.commit()
 
     return chat_session.id, answer
@@ -61,7 +117,9 @@ def ask_ai(db: Session, *, user: User, course_id: int, message: str) -> tuple[in
 def get_history(db: Session, *, user: User, course_id: int) -> AIHistoryResponse:
     course = db.get(Course, course_id)
     if course is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Курс не найден")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Курс не найден"
+        )
 
     chat_session = db.scalar(
         select(AIChatSession)

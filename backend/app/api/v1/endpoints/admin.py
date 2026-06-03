@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, Query, Response, status
+from fastapi import APIRouter, Depends, Query, Request, Response, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_admin_user
+from app.core.audit import log_audit_event
 from app.core.db import get_db
 from app.schemas.course import AdminCourseResponse, AdminCourseWriteRequest
 from app.schemas.user import AdminUserResponse, AdminUserUpdateRequest
@@ -29,9 +30,19 @@ def admin_list_courses(
 @router.post("/courses", response_model=AdminCourseResponse, status_code=status.HTTP_201_CREATED)
 def admin_create_course_endpoint(
     payload: AdminCourseWriteRequest,
+    request: Request,
+    current_admin=Depends(get_current_admin_user),
     db: Session = Depends(get_db),
 ) -> AdminCourseResponse:
     course = create_admin_course(db, payload)
+    log_audit_event(
+        event="admin.course.create",
+        actor_id=current_admin.id,
+        actor_email=current_admin.email,
+        resource=f"course:{course.id}",
+        request=request,
+        details={"title": course.title},
+    )
     return serialize_admin_course(course)
 
 
@@ -39,15 +50,37 @@ def admin_create_course_endpoint(
 def admin_update_course_endpoint(
     course_id: int,
     payload: AdminCourseWriteRequest,
+    request: Request,
+    current_admin=Depends(get_current_admin_user),
     db: Session = Depends(get_db),
 ) -> AdminCourseResponse:
     course = update_admin_course(db, course_id=course_id, payload=payload)
+    log_audit_event(
+        event="admin.course.update",
+        actor_id=current_admin.id,
+        actor_email=current_admin.email,
+        resource=f"course:{course.id}",
+        request=request,
+        details={"title": course.title},
+    )
     return serialize_admin_course(course)
 
 
 @router.delete("/courses/{course_id}", status_code=status.HTTP_204_NO_CONTENT)
-def admin_delete_course_endpoint(course_id: int, db: Session = Depends(get_db)) -> Response:
+def admin_delete_course_endpoint(
+    course_id: int,
+    request: Request,
+    current_admin=Depends(get_current_admin_user),
+    db: Session = Depends(get_db),
+) -> Response:
     delete_admin_course(db, course_id=course_id)
+    log_audit_event(
+        event="admin.course.delete",
+        actor_id=current_admin.id,
+        actor_email=current_admin.email,
+        resource=f"course:{course_id}",
+        request=request,
+    )
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
@@ -64,20 +97,37 @@ def admin_list_users(
 def admin_update_user(
     user_id: int,
     payload: AdminUserUpdateRequest,
+    request: Request,
     current_admin=Depends(get_current_admin_user),
     db: Session = Depends(get_db),
 ) -> AdminUserResponse:
     user = update_admin_user(db, current_admin=current_admin, user_id=user_id, payload=payload)
+    log_audit_event(
+        event="admin.user.update",
+        actor_id=current_admin.id,
+        actor_email=current_admin.email,
+        resource=f"user:{user.id}",
+        request=request,
+        details={"updated_email": user.email, "is_admin": user.is_admin, "is_active": user.is_active},
+    )
     return serialize_admin_user(user)
 
 
 @router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 def admin_delete_user(
     user_id: int,
+    request: Request,
     current_admin=Depends(get_current_admin_user),
     db: Session = Depends(get_db),
 ) -> Response:
     delete_admin_user(db, current_admin=current_admin, user_id=user_id)
+    log_audit_event(
+        event="admin.user.delete",
+        actor_id=current_admin.id,
+        actor_email=current_admin.email,
+        resource=f"user:{user_id}",
+        request=request,
+    )
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 

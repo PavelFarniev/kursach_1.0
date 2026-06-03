@@ -5,34 +5,16 @@ import { Link, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import {
+  progressToSlideIndex,
+  isFinalQuizSlide,
+  slideIndexToProgress,
+} from "@/pages/courses/courseProgress";
 import { useCourseStore } from "@/store/courseStore";
 import { useEnrollmentStore } from "@/store/enrollmentStore";
 import { CourseSlidesDeck } from "@/widgets/course/CourseSlidesDeck";
 import { CourseSupportDropdown } from "@/widgets/course/CourseSupportDropdown";
-
-const progressToSlideIndex = (progressPercent: number, slidesCount: number): number => {
-  if (slidesCount <= 0 || progressPercent <= 0) {
-    return 0;
-  }
-
-  for (let slideIndex = 0; slideIndex < slidesCount; slideIndex += 1) {
-    const slideProgress = Math.round(((slideIndex + 1) / slidesCount) * 100);
-
-    if (progressPercent <= slideProgress) {
-      return slideIndex;
-    }
-  }
-
-  return slidesCount - 1;
-};
-
-const slideIndexToProgress = (slideIndex: number, slidesCount: number): number => {
-  if (slidesCount <= 0) {
-    return 0;
-  }
-
-  return Math.min(100, Math.max(0, Math.round(((slideIndex + 1) / slidesCount) * 100)));
-};
+import type { ModuleQuizResult } from "@/widgets/course/moduleQuiz";
 
 export function CourseLearningPage(): JSX.Element {
   const params = useParams<{ id: string }>();
@@ -52,14 +34,20 @@ export function CourseLearningPage(): JSX.Element {
   const enrollment = useMemo(() => enrollments.find((item) => item.courseId === courseId), [enrollments, courseId]);
   const progressPercent = enrollment?.progressPercent ?? 0;
   const isCompleted = enrollment?.status === "completed";
-  const slidesCount = selectedCourse?.slides?.length ?? 0;
+  const slides = selectedCourse?.slides ?? [];
+  const slidesCount = slides.length;
   const derivedSlideIndex = useMemo(() => progressToSlideIndex(progressPercent, slidesCount), [progressPercent, slidesCount]);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(derivedSlideIndex);
+  const [hasPassedFinalQuizLocally, setHasPassedFinalQuizLocally] = useState(progressPercent >= 100);
   const persistedProgressRef = useRef(progressPercent);
   const desiredProgressRef = useRef(progressPercent);
   const isSyncingProgressRef = useRef(false);
   const hasLocalSlideControlRef = useRef(false);
-  const displayProgressPercent = enrollment ? slideIndexToProgress(currentSlideIndex, slidesCount) : 0;
+  const finalQuizPassed = hasPassedFinalQuizLocally || progressPercent >= 100 || isCompleted;
+  const displayProgressPercent = enrollment
+    ? slideIndexToProgress(currentSlideIndex, slides, { finalQuizPassed })
+    : 0;
+  const isCurrentSlideFinalQuiz = isFinalQuizSlide(slides, currentSlideIndex);
 
   useEffect(() => {
     if (!Number.isFinite(courseId)) {
@@ -75,10 +63,12 @@ export function CourseLearningPage(): JSX.Element {
     setCurrentSlideIndex(derivedSlideIndex);
     persistedProgressRef.current = progressPercent;
     desiredProgressRef.current = progressPercent;
+    setHasPassedFinalQuizLocally(progressPercent >= 100);
   }, [courseId]);
 
   useEffect(() => {
     persistedProgressRef.current = progressPercent;
+    setHasPassedFinalQuizLocally(progressPercent >= 100);
 
     if (!hasLocalSlideControlRef.current) {
       setCurrentSlideIndex(derivedSlideIndex);
@@ -103,6 +93,7 @@ export function CourseLearningPage(): JSX.Element {
         } catch {
           desiredProgressRef.current = persistedProgressRef.current;
           hasLocalSlideControlRef.current = false;
+          setHasPassedFinalQuizLocally(persistedProgressRef.current >= 100);
           setCurrentSlideIndex(progressToSlideIndex(persistedProgressRef.current, slidesCount));
           break;
         }
@@ -122,7 +113,7 @@ export function CourseLearningPage(): JSX.Element {
     try {
       const createdEnrollment = await enrollToCourse(selectedCourse.id);
       const initialSlideIndex = Math.min(currentSlideIndex, Math.max(0, slidesCount - 1));
-      const initialProgress = slideIndexToProgress(initialSlideIndex, slidesCount);
+      const initialProgress = slideIndexToProgress(initialSlideIndex, slides);
 
       if (slidesCount > 0) {
         desiredProgressRef.current = initialProgress;
@@ -145,6 +136,7 @@ export function CourseLearningPage(): JSX.Element {
       desiredProgressRef.current = 0;
       persistedProgressRef.current = 0;
       hasLocalSlideControlRef.current = true;
+      setHasPassedFinalQuizLocally(false);
       await updateProgress(enrollment.id, 0);
       setCurrentSlideIndex(0);
     } finally {
@@ -157,13 +149,36 @@ export function CourseLearningPage(): JSX.Element {
     hasLocalSlideControlRef.current = true;
     setCurrentSlideIndex(clampedIndex);
 
-    if (!enrollment) {
+    if (!enrollment || finalQuizPassed) {
       return;
     }
 
-    desiredProgressRef.current = slideIndexToProgress(clampedIndex, slidesCount);
+    desiredProgressRef.current = slideIndexToProgress(clampedIndex, slides, { finalQuizPassed: false });
     void flushProgressSync(enrollment.id);
   };
+
+  const handleQuizSubmit = (slideIndex: number, result: ModuleQuizResult): void => {
+    if (!enrollment || finalQuizPassed || !isFinalQuizSlide(slides, slideIndex)) {
+      return;
+    }
+
+    const nextProgress = slideIndexToProgress(slideIndex, slides, { finalQuizPassed: result.passed });
+    hasLocalSlideControlRef.current = true;
+    desiredProgressRef.current = nextProgress;
+    setHasPassedFinalQuizLocally(result.passed);
+
+    if (nextProgress !== persistedProgressRef.current) {
+      void flushProgressSync(enrollment.id);
+    }
+  };
+
+  const progressDescription = isCurrentSlideFinalQuiz
+    ? finalQuizPassed
+      ? "Курс завершён. Финальный тест можно пройти повторно для самопроверки, не сбрасывая зачёт."
+      : "Последний шаг: завершите итоговый тест, чтобы получить 100% и отметить курс как пройденный."
+    : finalQuizPassed
+      ? "Курс уже завершён, поэтому вы можете свободно пересматривать слайды без изменения зачтённого результата."
+      : "Прогресс соответствует текущему открытому слайду и меняется при переходах вперёд и назад.";
 
   if (!Number.isFinite(courseId)) {
     return <p className="text-warning">Некорректный идентификатор курса</p>;
@@ -213,9 +228,7 @@ export function CourseLearningPage(): JSX.Element {
                 <p className="text-sm font-medium text-foreground">
                   Слайды: {slidesCount > 0 && enrollment ? currentSlideIndex + 1 : 0} / {slidesCount}
                 </p>
-                <p className="text-sm text-muted-foreground">
-                  Прогресс соответствует текущему открытому слайду и меняется при переходах вперёд и назад.
-                </p>
+                <p className="text-sm text-muted-foreground">{progressDescription}</p>
               </div>
 
               {!enrollment ? (
@@ -234,7 +247,13 @@ export function CourseLearningPage(): JSX.Element {
         </CardContent>
       </Card>
 
-      <CourseSlidesDeck course={selectedCourse} currentIndex={currentSlideIndex} onSlideChange={handleSlideChange} />
+      <CourseSlidesDeck
+        course={selectedCourse}
+        currentIndex={currentSlideIndex}
+        onSlideChange={handleSlideChange}
+        quizPassed={finalQuizPassed}
+        onQuizSubmit={handleQuizSubmit}
+      />
 
       <CourseSupportDropdown courseId={selectedCourse.id} courseTitle={selectedCourse.title} />
 

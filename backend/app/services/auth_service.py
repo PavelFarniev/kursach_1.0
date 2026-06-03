@@ -220,6 +220,13 @@ def change_password(
     return _create_token_pair_for_session(db, user, current_session, user_agent=user_agent, ip_address=ip_address)
 
 
+def logout_session(db: Session, *, session: UserSession) -> None:
+    if session.revoked_at is None:
+        session.revoked_at = datetime.now(timezone.utc)
+        db.add(session)
+        db.commit()
+
+
 def request_password_reset(db: Session, *, email: str) -> PasswordResetRequestResponse:
     normalized_email = email.strip().lower()
     user = db.scalar(select(User).where(func.lower(User.email) == normalized_email))

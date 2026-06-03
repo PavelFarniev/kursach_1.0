@@ -4,13 +4,19 @@ import { apiClient } from "@/services/api/client";
 import { USE_MOCK_API } from "@/services/api/config";
 import type { AIAskPayload, AIAskResponse, AIHistoryResponse } from "@/types/api";
 
+const AI_ASK_TIMEOUT_MS = 45_000;
+
 export const aiApi = {
   async ask(payload: AIAskPayload): Promise<AIAskResponse> {
     if (USE_MOCK_API) {
       return mockAIApi.ask(payload, localStorage.getItem("access_token") ?? undefined);
     }
 
-    const response = await apiClient.post<AIAskResponse>(API_ENDPOINTS.aiAsk, payload);
+    const response = await apiClient.post<AIAskResponse>(
+      API_ENDPOINTS.aiAsk,
+      payload,
+      { timeout: AI_ASK_TIMEOUT_MS },
+    );
     return response.data;
   },
 

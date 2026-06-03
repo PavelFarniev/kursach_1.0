@@ -5,7 +5,10 @@ import { USE_MOCK_API } from "@/services/api/config";
 import { readStoredTokens } from "@/services/api/tokenStorage";
 import type {
   ChangePasswordPayload,
+  GigaChatCredentialsPayload,
+  GigaChatCredentialsStatus,
   LoginPayload,
+  MessageResponse,
   RefreshTokenPayload,
   RegisterPayload,
   TokenPair,
@@ -18,7 +21,10 @@ export const authApi = {
       return mockAuthApi.register(payload);
     }
 
-    const response = await apiClient.post<TokenPair>(API_ENDPOINTS.authRegister, payload);
+    const response = await apiClient.post<TokenPair>(
+      API_ENDPOINTS.authRegister,
+      payload,
+    );
     return response.data;
   },
 
@@ -27,16 +33,34 @@ export const authApi = {
       return mockAuthApi.login(payload);
     }
 
-    const response = await apiClient.post<TokenPair>(API_ENDPOINTS.authLogin, payload);
+    const response = await apiClient.post<TokenPair>(
+      API_ENDPOINTS.authLogin,
+      payload,
+    );
     return response.data;
   },
 
-  async refresh(payload: RefreshTokenPayload): Promise<TokenPair> {
+  async refresh(payload?: RefreshTokenPayload): Promise<TokenPair> {
     if (USE_MOCK_API) {
       throw new Error("Обновление токена недоступно в mock-режиме");
     }
 
-    const response = await apiClient.post<TokenPair>(API_ENDPOINTS.authRefresh, payload);
+    const response = await apiClient.post<TokenPair>(
+      API_ENDPOINTS.authRefresh,
+      payload ?? {},
+    );
+    return response.data;
+  },
+
+  async logout(): Promise<MessageResponse> {
+    if (USE_MOCK_API) {
+      return { message: "Сессия завершена" };
+    }
+
+    const response = await apiClient.post<MessageResponse>(
+      API_ENDPOINTS.authLogout,
+      {},
+    );
     return response.data;
   },
 
@@ -54,7 +78,46 @@ export const authApi = {
       throw new Error("Смена пароля недоступна в mock-режиме");
     }
 
-    const response = await apiClient.post<TokenPair>(API_ENDPOINTS.authChangePassword, payload);
+    const response = await apiClient.post<TokenPair>(
+      API_ENDPOINTS.authChangePassword,
+      payload,
+    );
+    return response.data;
+  },
+
+  async getGigachatCredentialsStatus(): Promise<GigaChatCredentialsStatus> {
+    if (USE_MOCK_API) {
+      return { hasCredentials: false };
+    }
+
+    const response = await apiClient.get<GigaChatCredentialsStatus>(
+      API_ENDPOINTS.userGigachatCredentials,
+    );
+    return response.data;
+  },
+
+  async updateGigachatCredentials(
+    payload: GigaChatCredentialsPayload,
+  ): Promise<GigaChatCredentialsStatus> {
+    if (USE_MOCK_API) {
+      return { hasCredentials: true };
+    }
+
+    const response = await apiClient.put<GigaChatCredentialsStatus>(
+      API_ENDPOINTS.userGigachatCredentials,
+      payload,
+    );
+    return response.data;
+  },
+
+  async deleteGigachatCredentials(): Promise<GigaChatCredentialsStatus> {
+    if (USE_MOCK_API) {
+      return { hasCredentials: false };
+    }
+
+    const response = await apiClient.delete<GigaChatCredentialsStatus>(
+      API_ENDPOINTS.userGigachatCredentials,
+    );
     return response.data;
   },
 };

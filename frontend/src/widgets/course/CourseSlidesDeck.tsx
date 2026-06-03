@@ -4,21 +4,35 @@ import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Course } from "@/types/domain";
-import { ModuleQuizCard, parseModuleQuiz } from "@/widgets/course/ModuleQuizCard";
+import { ModuleQuizCard } from "@/widgets/course/ModuleQuizCard";
+import { FINAL_QUIZ_PASS_PERCENT, parseModuleQuiz, type ModuleQuizResult } from "@/widgets/course/moduleQuiz";
 
 interface CourseSlidesDeckProps {
   course: Course;
   currentIndex: number;
   onSlideChange: (nextIndex: number) => void;
+  quizPassed?: boolean;
+  onQuizSubmit?: (slideIndex: number, result: ModuleQuizResult) => void;
 }
 
-export function CourseSlidesDeck({ course, currentIndex, onSlideChange }: CourseSlidesDeckProps): JSX.Element {
+export function CourseSlidesDeck({
+  course,
+  currentIndex,
+  onSlideChange,
+  quizPassed = false,
+  onQuizSubmit,
+}: CourseSlidesDeckProps): JSX.Element {
   const slides = course.slides ?? [];
   const safeCurrentIndex = Math.min(Math.max(0, currentIndex), Math.max(0, slides.length - 1));
   const currentSlide = useMemo(() => slides[safeCurrentIndex] ?? null, [safeCurrentIndex, slides]);
   const moduleQuiz = useMemo(() => (currentSlide ? parseModuleQuiz(currentSlide.practiceTask) : null), [currentSlide]);
   const isFirstSlide = safeCurrentIndex === 0;
   const isLastSlide = safeCurrentIndex === slides.length - 1;
+  const finalQuizHint = isLastSlide
+    ? quizPassed
+      ? "Курс уже завершён. Тест можно пройти ещё раз для самопроверки."
+      : `Для завершения курса нужно пройти итоговый тест минимум на ${FINAL_QUIZ_PASS_PERCENT}%.`
+    : undefined;
 
   if (!currentSlide) {
     return (
@@ -104,7 +118,13 @@ export function CourseSlidesDeck({ course, currentIndex, onSlideChange }: Course
           </div>
 
           {moduleQuiz ? (
-            <ModuleQuizCard key={currentSlide.id} quiz={moduleQuiz} />
+            <ModuleQuizCard
+              key={currentSlide.id}
+              quiz={moduleQuiz}
+              passingScore={FINAL_QUIZ_PASS_PERCENT}
+              statusHint={finalQuizHint}
+              onSubmit={(result) => onQuizSubmit?.(safeCurrentIndex, result)}
+            />
           ) : (
             <div className="space-y-4 rounded-2xl border border-primary/20 bg-primary/10 px-6 py-5">
               <p className="text-sm font-semibold text-foreground">Вопрос для самопроверки</p>

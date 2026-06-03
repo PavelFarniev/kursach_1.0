@@ -1,6 +1,7 @@
 import { create } from "zustand";
 
 import { aiApi } from "@/services/api/aiApi";
+import { getApiErrorMessage } from "@/shared/lib/getApiErrorMessage";
 import type { ChatMessage } from "@/types/domain";
 
 interface ChatState {
@@ -27,7 +28,7 @@ const toAssistantMessage = (content: string): ChatMessage => ({
   createdAt: new Date().toISOString(),
 });
 
-export const useChatStore = create<ChatState>((set, get) => ({
+export const useChatStore = create<ChatState>((set) => ({
   messagesByCourse: {},
   isLoadingHistoryByCourse: {},
   isSendingByCourse: {},
@@ -58,7 +59,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
         },
       }));
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Не удалось загрузить историю чата";
+      const message = getApiErrorMessage(
+        error,
+        "Не удалось загрузить историю чата",
+      );
       set((state) => ({
         isLoadingHistoryByCourse: {
           ...state.isLoadingHistoryByCourse,
@@ -110,8 +114,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
         },
       }));
     } catch (error) {
-      const fallback =
-        error instanceof Error ? error.message : "Ошибка AI-ассистента. Попробуйте ещё раз через минуту.";
+      const fallback = getApiErrorMessage(
+        error,
+        "Ошибка AI-ассистента. Попробуйте ещё раз через минуту.",
+      );
       set((state) => ({
         isSendingByCourse: {
           ...state.isSendingByCourse,
@@ -120,14 +126,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
         errorByCourse: {
           ...state.errorByCourse,
           [courseId]: fallback,
-        },
-      }));
-
-      const current = get().messagesByCourse[courseId] ?? [];
-      set((state) => ({
-        messagesByCourse: {
-          ...state.messagesByCourse,
-          [courseId]: current.filter((item) => item.id !== userMessage.id),
         },
       }));
     }

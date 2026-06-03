@@ -1,6 +1,7 @@
 import { create } from "zustand";
 
 import { authApi } from "@/services/api/authApi";
+import { USE_MOCK_API } from "@/services/api/config";
 import { registerAuthSessionHandlers } from "@/services/api/authSession";
 import {
   clearStoredTokens,
@@ -23,7 +24,7 @@ interface AuthState {
   login: (payload: LoginPayload) => Promise<void>;
   register: (payload: RegisterPayload) => Promise<void>;
   changePassword: (payload: ChangePasswordPayload) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   clearError: () => void;
 }
 
@@ -38,15 +39,54 @@ const persistTokens = (tokens: TokenPair): void => {
 };
 
 const initialTokens = readStoredTokens();
+const SESSION_MARKER = "cookie-session";
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
-  accessToken: initialTokens.accessToken,
-  refreshToken: initialTokens.refreshToken,
-  isLoading: Boolean(initialTokens.accessToken),
+  accessToken: USE_MOCK_API ? initialTokens.accessToken : null,
+  refreshToken: USE_MOCK_API ? initialTokens.refreshToken : null,
+  isLoading: true,
   error: null,
 
   bootstrap: async () => {
+    if (!USE_MOCK_API) {
+      set({ isLoading: true, error: null });
+
+      try {
+        const user = await authApi.profile();
+        set({
+          user,
+          accessToken: SESSION_MARKER,
+          refreshToken: SESSION_MARKER,
+          isLoading: false,
+          error: null,
+        });
+      } catch {
+        try {
+          await authApi.refresh();
+          const user = await authApi.profile();
+          set({
+            user,
+            accessToken: SESSION_MARKER,
+            refreshToken: SESSION_MARKER,
+            isLoading: false,
+            error: null,
+          });
+        } catch {
+          clearUserBoundState();
+          set({
+            user: null,
+            accessToken: null,
+            refreshToken: null,
+            isLoading: false,
+            error: null,
+          });
+        }
+      }
+
+      return;
+    }
+
     const { accessToken, refreshToken } = readStoredTokens();
 
     if (!accessToken || !refreshToken) {
@@ -99,13 +139,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     try {
       const tokens = await authApi.login(payload);
-      persistTokens(tokens);
+      if (USE_MOCK_API) {
+        persistTokens(tokens);
+      }
       const user = await authApi.profile();
 
       set({
         user,
-        accessToken: tokens.accessToken,
-        refreshToken: tokens.refreshToken,
+        accessToken: USE_MOCK_API ? tokens.accessToken : SESSION_MARKER,
+        refreshToken: USE_MOCK_API ? tokens.refreshToken : SESSION_MARKER,
         isLoading: false,
       });
     } catch (error) {
@@ -122,13 +164,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     try {
       const tokens = await authApi.register(payload);
-      persistTokens(tokens);
+      if (USE_MOCK_API) {
+        persistTokens(tokens);
+      }
       const user = await authApi.profile();
 
       set({
         user,
-        accessToken: tokens.accessToken,
-        refreshToken: tokens.refreshToken,
+        accessToken: USE_MOCK_API ? tokens.accessToken : SESSION_MARKER,
+        refreshToken: USE_MOCK_API ? tokens.refreshToken : SESSION_MARKER,
         isLoading: false,
       });
     } catch (error) {
@@ -145,13 +189,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     try {
       const tokens = await authApi.changePassword(payload);
-      persistTokens(tokens);
+      if (USE_MOCK_API) {
+        persistTokens(tokens);
+      }
       const user = await authApi.profile();
 
       set({
         user,
-        accessToken: tokens.accessToken,
-        refreshToken: tokens.refreshToken,
+        accessToken: USE_MOCK_API ? tokens.accessToken : SESSION_MARKER,
+        refreshToken: USE_MOCK_API ? tokens.refreshToken : SESSION_MARKER,
         isLoading: false,
       });
     } catch (error) {
@@ -161,7 +207,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  logout: () => {
+  logout: async () => {
+    try {
+      await authApi.logout();
+    } catch {
+      // Even if backend logout fails, we still clear local user-bound state.
+    }
     clearStoredTokens();
     clearUserBoundState();
     set({ user: null, accessToken: null, refreshToken: null, error: null });
@@ -175,10 +226,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 }));
 
 registerAuthSessionHandlers({
-  onSessionUpdated: (tokens) => {
+  onSessionUpdated: (_tokens) => {
     useAuthStore.setState({
-      accessToken: tokens.accessToken,
-      refreshToken: tokens.refreshToken,
+      accessToken: SESSION_MARKER,
+      refreshToken: SESSION_MARKER,
       error: null,
     });
   },

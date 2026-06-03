@@ -25,6 +25,10 @@ export interface RefreshTokenPayload {
   refreshToken: string;
 }
 
+export interface MessageResponse {
+  message: string;
+}
+
 export interface TokenPair {
   accessToken: string;
   refreshToken: string;
@@ -34,6 +38,14 @@ export interface TokenPair {
 export interface ChangePasswordPayload {
   currentPassword: string;
   newPassword: string;
+}
+
+export interface GigaChatCredentialsPayload {
+  credentials: string;
+}
+
+export interface GigaChatCredentialsStatus {
+  hasCredentials: boolean;
 }
 
 export interface CourseFilters {
@@ -98,9 +110,15 @@ export interface AIHistoryResponse {
 export interface AuthApi {
   register(payload: RegisterPayload): Promise<TokenPair>;
   login(payload: LoginPayload): Promise<TokenPair>;
-  refresh(payload: RefreshTokenPayload): Promise<TokenPair>;
+  refresh(payload?: RefreshTokenPayload): Promise<TokenPair>;
+  logout(): Promise<MessageResponse>;
   profile(): Promise<UserProfile>;
   changePassword(payload: ChangePasswordPayload): Promise<TokenPair>;
+  getGigachatCredentialsStatus(): Promise<GigaChatCredentialsStatus>;
+  updateGigachatCredentials(
+    payload: GigaChatCredentialsPayload,
+  ): Promise<GigaChatCredentialsStatus>;
+  deleteGigachatCredentials(): Promise<GigaChatCredentialsStatus>;
 }
 
 export interface CoursesApi {
@@ -111,7 +129,10 @@ export interface CoursesApi {
 export interface EnrollmentsApi {
   enroll(payload: EnrollPayload): Promise<EnrollmentWithCourse>;
   my(): Promise<EnrollmentWithCourse[]>;
-  patchProgress(enrollmentId: number, payload: ProgressPayload): Promise<EnrollmentWithCourse>;
+  patchProgress(
+    enrollmentId: number,
+    payload: ProgressPayload,
+  ): Promise<EnrollmentWithCourse>;
 }
 
 export interface AIApi {
@@ -131,10 +152,16 @@ export interface PulseApi {
 
 export interface AdminApi {
   listUsers(filters?: AdminUsersFilters): Promise<AdminUser[]>;
-  updateUser(userId: number, payload: UpdateAdminUserPayload): Promise<AdminUser>;
+  updateUser(
+    userId: number,
+    payload: UpdateAdminUserPayload,
+  ): Promise<AdminUser>;
   deleteUser(userId: number): Promise<void>;
   listCourses(filters?: AdminCoursesFilters): Promise<AdminCourse[]>;
   createCourse(payload: AdminCourseWritePayload): Promise<AdminCourse>;
-  updateCourse(courseId: number, payload: AdminCourseWritePayload): Promise<AdminCourse>;
+  updateCourse(
+    courseId: number,
+    payload: AdminCourseWritePayload,
+  ): Promise<AdminCourse>;
   deleteCourse(courseId: number): Promise<void>;
 }

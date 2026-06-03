@@ -1,4 +1,5 @@
 import { API_ENDPOINTS } from "@/shared/constants/api";
+import { readMockStoredNotes } from "@/shared/mocks/mockPulse";
 import { apiClient } from "@/services/api/client";
 import { USE_MOCK_API } from "@/services/api/config";
 import type { CreateNotePayload } from "@/types/api";
@@ -7,7 +8,7 @@ import type { CourseNote } from "@/types/domain";
 export const notesApi = {
   async my(): Promise<CourseNote[]> {
     if (USE_MOCK_API) {
-      return [];
+      return readMockStoredNotes();
     }
 
     const response = await apiClient.get<CourseNote[]>(API_ENDPOINTS.myNotes);

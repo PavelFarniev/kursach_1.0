@@ -2,7 +2,6 @@ import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
 
 import { API_ENDPOINTS } from "@/shared/constants/api";
 import { notifySessionUpdated, notifyUnauthorized } from "@/services/api/authSession";
-import { clearStoredTokens, readStoredTokens, writeStoredTokens } from "@/services/api/tokenStorage";
 import type { TokenPair } from "@/types/api";
 
 interface RetriableRequestConfig extends InternalAxiosRequestConfig {
@@ -14,11 +13,13 @@ const API_BASE_URL = "/api/v1";
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10_000,
+  withCredentials: true,
 });
 
 const refreshClient = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10_000,
+  withCredentials: true,
 });
 
 let refreshPromise: Promise<TokenPair> | null = null;
@@ -30,28 +31,9 @@ const PUBLIC_AUTH_PATHS = [
 ];
 
 const requestTokenRefresh = async (): Promise<TokenPair> => {
-  const { refreshToken } = readStoredTokens();
-
-  if (!refreshToken) {
-    throw new Error("Refresh token is missing");
-  }
-
-  const response = await refreshClient.post<TokenPair>(API_ENDPOINTS.authRefresh, {
-    refreshToken,
-  });
+  const response = await refreshClient.post<TokenPair>(API_ENDPOINTS.authRefresh, {});
   return response.data;
 };
-
-apiClient.interceptors.request.use((config) => {
-  const token = readStoredTokens().accessToken;
-
-  if (token) {
-    config.headers = config.headers ?? {};
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-
-  return config;
-});
 
 apiClient.interceptors.response.use(
   (response) => response,
@@ -66,13 +48,6 @@ apiClient.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    const { refreshToken } = readStoredTokens();
-    if (!refreshToken) {
-      clearStoredTokens();
-      notifyUnauthorized();
-      return Promise.reject(error);
-    }
-
     originalRequest._retry = true;
 
     try {
@@ -81,14 +56,9 @@ apiClient.interceptors.response.use(
       });
 
       const tokens = await refreshPromise;
-      writeStoredTokens(tokens.accessToken, tokens.refreshToken);
       notifySessionUpdated(tokens);
-      originalRequest.headers = originalRequest.headers ?? {};
-      originalRequest.headers.Authorization = `Bearer ${tokens.accessToken}`;
-
       return apiClient(originalRequest);
     } catch (refreshError) {
-      clearStoredTokens();
       notifyUnauthorized();
       return Promise.reject(refreshError);
     }
